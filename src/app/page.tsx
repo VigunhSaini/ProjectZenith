@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import LocationSearch from "@/components/LocationSearch";
@@ -30,7 +30,11 @@ export default function LandingPage() {
   } | null>(null);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const viewerRef = useRef<unknown>(null);
+  const [cesiumViewer, setCesiumViewer] = useState<unknown>(null);
+
+  const handleGlobeReady = useCallback((viewer: unknown) => {
+    setCesiumViewer(viewer);
+  }, []);
 
   const handleLocationSelect = useCallback(
     (lat: number, lon: number, name: string) => {
@@ -61,11 +65,12 @@ export default function LandingPage() {
       <GlobeView
         onLocationSelect={handleGlobeClick}
         flyToLocation={flyTarget}
+        onGlobeReady={handleGlobeReady}
       />
 
       {/* ISS marker on globe */}
       <ISSMarker
-        viewer={viewerRef.current}
+        viewer={cesiumViewer}
         observerLat={selectedLocation?.lat ?? null}
         observerLon={selectedLocation?.lon ?? null}
       />

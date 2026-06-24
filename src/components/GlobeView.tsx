@@ -6,6 +6,8 @@ import type { Viewer } from "cesium";
 interface GlobeViewProps {
   onLocationSelect: (lat: number, lon: number) => void;
   flyToLocation?: { lat: number; lon: number } | null;
+  /** Called once the Cesium Viewer is fully initialised */
+  onGlobeReady?: (viewer: unknown) => void;
 }
 
 // Dynamically import Cesium to avoid SSR issues
@@ -21,6 +23,7 @@ async function getCesium() {
 export default function GlobeView({
   onLocationSelect,
   flyToLocation,
+  onGlobeReady,
 }: GlobeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
@@ -102,6 +105,9 @@ export default function GlobeView({
 
       clickHandlerRef.current = handler;
       viewerRef.current = viewer;
+
+      // Notify parent that the viewer is ready
+      onGlobeReady?.(viewer);
     };
 
     initCesium().catch(console.error);

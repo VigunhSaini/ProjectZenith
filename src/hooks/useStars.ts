@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CelestialObject } from "@/lib/celestial";
-import { raDecToAltAz, nextTransit } from "@/lib/astronomy";
+import { raDecToAltAz } from "@/lib/astronomy";
 
 const STARS_URL = "/data/hyg_stars.json";
 
@@ -60,14 +60,6 @@ export function useStars(
 
         if (altAz.alt <= 0) continue;
 
-        const transit = nextTransit(
-          star.ra,
-          star.dec,
-          observerLat,
-          observerLon,
-          now
-        );
-
         result.push({
           id: `star-${star.id}`,
           name: star.name || `HYG ${star.id}`,
@@ -79,7 +71,7 @@ export function useStars(
           distanceKm: star.distLy * LY_TO_KM,
           magnitude: star.mag,
           color: star.color,
-          nextTransit: transit?.toISOString() ?? null,
+          nextTransit: null, // computed lazily on selection
         });
       }
 

@@ -1,90 +1,61 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+/**
+ * usePlanets — computes positions + distances for the 7 naked-eye planets
+ * using astronomy-engine entirely client-side.
+ *
+ * Benefits over the previous JPL Horizons approach:
+ *  - No network requests (eliminates rate-limit errors, Bug 5)
+ *  - Real geocentric distances in km (fixes hardcoded 1e9, Bug 4)
+ *  - Instant results — no async latency
+ *  - Works offline
+ */
+
+import { useEffect, useState } from "react";
+import * as Astronomy from "astronomy-engine";
 import { CelestialObject } from "@/lib/celestial";
-import { parseRA, parseDec } from "@/lib/coordinates";
-import { raDecToAltAz, nextTransit } from "@/lib/astronomy";
+import { nextTransit } from "@/lib/astronomy";
 
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+// AU → km
+const AU_TO_KM = 1.495978707e8;
 
-const PLANETS: Array<{
+interface PlanetDef {
   name: string;
   id: string;
-  target: string; // JPL Horizons target body code
+  body: Astronomy.Body;
   color: string;
-  magnitude: number;
-}> = [
-  { name: "Mercury", id: "planet-mercury", target: "199", color: "#B5A290", magnitude: 0.0 },
-  { name: "Venus",   id: "planet-venus",   target: "299", color: "#E8CFAA", magnitude: -4.4 },
-  { name: "Mars",    id: "planet-mars",    target: "499", color: "#C1440E", magnitude: 0.5 },
-  { name: "Jupiter", id: "planet-jupiter", target: "599", color: "#C88B3A", magnitude: -2.0 },
-  { name: "Saturn",  id: "planet-saturn",  target: "699", color: "#E4D191", magnitude: 0.7 },
-  { name: "Uranus",  id: "planet-uranus",  target: "799", color: "#7FFFD4", magnitude: 5.7 },
-  { name: "Neptune", id: "planet-neptune", target: "899", color: "#4B70DD", magnitude: 7.9 },
+}
+
+const PLANETS: PlanetDef[] = [
+  { name: "Mercury", id: "planet-mercury", body: Astronomy.Body.Mercury, color: "#B5A290" },
+  { name: "Venus",   id: "planet-venus",   body: Astronomy.Body.Venus,   color: "#E8CFAA" },
+  { name: "Mars",    id: "planet-mars",    body: Astronomy.Body.Mars,    color: "#C1440E" },
+  { name: "Jupiter", id: "planet-jupiter", body: Astronomy.Body.Jupiter, color: "#C88B3A" },
+  { name: "Saturn",  id: "planet-saturn",  body: Astronomy.Body.Saturn,  color: "#E4D191" },
+  { name: "Uranus",  id: "planet-uranus",  body: Astronomy.Body.Uranus,  color: "#7FFFD4" },
+  { name: "Neptune", id: "planet-neptune", body: Astronomy.Body.Neptune, color: "#4B70DD" },
 ];
 
-interface PlanetCache {
-  timestamp: number;
-  ra: number; // decimal hours
-  dec: number; // decimal degrees
-}
-
-const planetCache = new Map<string, PlanetCache>();
-
 /**
- * Build the Horizons CGI URL for a single planet's RA/Dec at the current time.
+ * Get the apparent visual magnitude of a planet using astronomy-engine.
+ * Falls back to a reasonable fixed value if the call fails.
  */
-function horizonsUrl(target: string): string {
-  const now = new Date();
-  const stop = new Date(now.getTime() + 60_000); // 1 minute window
-  const fmt = (d: Date) =>
-    d.toISOString().slice(0, 16).replace("T", " ");
-
-  const params = new URLSearchParams({
-    format: "text",
-    COMMAND: `'${target}'`,
-    OBJ_DATA: "NO",
-    MAKE_EPHEM: "YES",
-    EPHEM_TYPE: "OBSERVER",
-    CENTER: "500@399", // geocenter
-    START_TIME: `'${fmt(now)}'`,
-    STOP_TIME: `'${fmt(stop)}'`,
-    STEP_SIZE: "1 m",
-    QUANTITIES: "1", // RA & Dec only
-  });
-
-  return `https://ssd.jpl.nasa.gov/api/horizons.api?${params.toString()}`;
-}
-
-/**
- * Parse RA/Dec from Horizons text output ($$SOE...$$EOE block).
- * Returns null if parsing fails.
- */
-function parseHorizonsRaDec(
-  text: string
-): { ra: number; dec: number } | null {
-  const soeIdx = text.indexOf("$$SOE");
-  const eoeIdx = text.indexOf("$$EOE");
-  if (soeIdx === -1 || eoeIdx === -1) return null;
-
-  const block = text.slice(soeIdx + 5, eoeIdx).trim();
-  const lines = block.split("\n").filter((l) => l.trim());
-  if (!lines.length) return null;
-
-  // Horizons OBSERVER RA/Dec format:
-  // "2024-Jan-01 00:00  *   HH MM SS.ff  +/-DD MM SS.f  ..."
-  const line = lines[0].trim();
-  // Match "HH MM SS.ff  sDD MM SS.f" pattern
-  const match = line.match(
-    /(\d{2}\s+\d{2}\s+[\d.]+)\s+([+-]\d{2}\s+\d{2}\s+[\d.]+)/
-  );
-  if (!match) return null;
-
-  const ra = parseRA(match[1].replace(/\s+/g, " "));
-  const dec = parseDec(match[2].replace(/\s+/g, " "));
-
-  if (isNaN(ra) || isNaN(dec)) return null;
-  return { ra, dec };
+function getPlanetMagnitude(body: Astronomy.Body, time: Astronomy.AstroTime): number {
+  try {
+    return Astronomy.Illumination(body, time).mag;
+  } catch {
+    // Fallback magnitudes (approximate)
+    const fallback: Partial<Record<Astronomy.Body, number>> = {
+      [Astronomy.Body.Mercury]: 0.0,
+      [Astronomy.Body.Venus]:   -4.4,
+      [Astronomy.Body.Mars]:    0.5,
+      [Astronomy.Body.Jupiter]: -2.0,
+      [Astronomy.Body.Saturn]:  0.7,
+      [Astronomy.Body.Uranus]:  5.7,
+      [Astronomy.Body.Neptune]: 7.9,
+    };
+    return fallback[body] ?? 4.0;
+  }
 }
 
 export function usePlanets(
@@ -94,78 +65,58 @@ export function usePlanets(
   const [planets, setPlanets] = useState<CelestialObject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const fetchedRef = useRef(false);
 
   useEffect(() => {
     if (observerLat === null || observerLon === null) return;
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
 
-    const fetchAllPlanets = async () => {
-      setLoading(true);
-      setError(null);
-
+    try {
       const now = new Date();
+      const time = Astronomy.MakeTime(now);
+      const observer = new Astronomy.Observer(observerLat, observerLon, 0);
+
       const results: CelestialObject[] = [];
-      let anyError = false;
 
-      await Promise.allSettled(
-        PLANETS.map(async (planet) => {
-          // Check cache
-          const cached = planetCache.get(planet.target);
-          let ra: number, dec: number;
+      for (const planet of PLANETS) {
+        // Equatorial coordinates (apparent RA/Dec, J2000)
+        const equatorial = Astronomy.Equator(planet.body, time, observer, true, true);
+        const ra  = equatorial.ra;   // decimal hours
+        const dec = equatorial.dec;  // decimal degrees
 
-          if (cached && now.getTime() - cached.timestamp < CACHE_TTL_MS) {
-            ra = cached.ra;
-            dec = cached.dec;
-          } else {
-            try {
-              const res = await fetch(horizonsUrl(planet.target));
-              if (!res.ok) throw new Error(`HTTP ${res.status}`);
-              const text = await res.text();
-              const parsed = parseHorizonsRaDec(text);
-              if (!parsed) throw new Error("Parse failure");
-              ra = parsed.ra;
-              dec = parsed.dec;
-              planetCache.set(planet.target, { timestamp: now.getTime(), ra, dec });
-            } catch (err) {
-              anyError = true;
-              console.warn(`Horizons fetch failed for ${planet.name}:`, err);
-              return;
-            }
-          }
+        // Horizontal coordinates
+        const hor = Astronomy.Horizon(time, observer, ra, dec, "normal");
+        if (hor.altitude < 0) continue; // below horizon
 
-          const altAz = raDecToAltAz(ra, dec, observerLat, observerLon, now);
-          if (altAz.alt < 0) return; // below horizon
+        // Geocentric distance in km
+        const distanceKm = equatorial.dist * AU_TO_KM;
 
-          const transit = nextTransit(ra, dec, observerLat, observerLon, now);
+        // Next transit (cheap 1-minute step LST bisection)
+        const transit = nextTransit(ra, dec, observerLat, observerLon, now);
 
-          results.push({
-            id: planet.id,
-            name: planet.name,
-            category: "planet",
-            az: altAz.az,
-            alt: altAz.alt,
-            ra,
-            dec,
-            distanceKm: 1e9, // approximate order-of-magnitude; Horizons doesn't return distance in qty=1
-            magnitude: planet.magnitude,
-            color: planet.color,
-            nextTransit: transit?.toISOString() ?? null,
-          });
-        })
-      );
+        // Apparent visual magnitude
+        const magnitude = getPlanetMagnitude(planet.body, time);
 
-      if (anyError && results.length === 0) {
-        setError("Horizons API unavailable — planet data temporarily unavailable");
+        results.push({
+          id: planet.id,
+          name: planet.name,
+          category: "planet",
+          az: hor.azimuth,
+          alt: hor.altitude,
+          ra,
+          dec,
+          distanceKm,
+          magnitude,
+          color: planet.color,
+          nextTransit: transit?.toISOString() ?? null,
+        });
       }
 
       results.sort((a, b) => b.alt - a.alt);
       setPlanets(results);
       setLoading(false);
-    };
-
-    fetchAllPlanets();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Planet computation failed");
+      setLoading(false);
+    }
   }, [observerLat, observerLon]);
 
   return { planets, loading, error };

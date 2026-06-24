@@ -83,3 +83,63 @@ export function tleToAltAz(
     return FAILURE;
   }
 }
+
+/**
+ * Find the next elevation peak (approximate transit) for a satellite
+ * by propagating forward in 15-second steps over a 2-hour window.
+ *
+ * Returns the Date of the highest predicted elevation, or null on failure.
+ * Only called lazily (on object selection) — NOT during bulk load.
+ */
+export function nextSatelliteTransit(
+  tleLine1: string,
+  tleLine2: string,
+  observerLat: number,
+  observerLon: number,
+  observerAltM: number,
+  fromDate: Date
+): Date | null {
+  try {
+    const satrec = satellite.twoline2satrec(tleLine1, tleLine2);
+    const observerGd: satellite.GeodeticLocation = {
+      latitude: satellite.degreesToRadians(observerLat),
+      longitude: satellite.degreesToRadians(observerLon),
+      height: observerAltM / 1000,
+    };
+
+    const STEP_MS = 15_000;         // 15-second resolution
+    const WINDOW_MS = 2 * 3600_000; // 2-hour look-ahead
+
+    let peakAlt = -Infinity;
+    let peakDate: Date | null = null;
+    let wasAboveHorizon = false;
+
+    for (let dt = 0; dt <= WINDOW_MS; dt += STEP_MS) {
+      const t = new Date(fromDate.getTime() + dt);
+      const posVel = satellite.propagate(satrec, t);
+      if (!posVel.position || typeof posVel.position === "boolean") continue;
+
+      const gmst = satellite.gstime(t);
+      const lookAngles = satellite.ecfToLookAngles(
+        observerGd,
+        satellite.eciToEcf(posVel.position as satellite.EciVec3<number>, gmst)
+      );
+      const altDeg = satellite.degreesLat(lookAngles.elevation);
+
+      if (altDeg > 0) {
+        wasAboveHorizon = true;
+        if (altDeg > peakAlt) {
+          peakAlt = altDeg;
+          peakDate = t;
+        }
+      } else if (wasAboveHorizon) {
+        // Dropped below horizon after a pass — we found the peak
+        break;
+      }
+    }
+
+    return peakDate;
+  } catch {
+    return null;
+  }
+}

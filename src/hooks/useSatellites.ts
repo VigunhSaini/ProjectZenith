@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { CelestialObject } from "@/lib/celestial";
 import { tleToAltAz, tleToGeodetic } from "@/lib/satellite";
-import { nextTransit } from "@/lib/astronomy";
 
 const CELESTRAK_URL =
   "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=2le";
@@ -108,7 +107,8 @@ export function useSatellites(
         if (altAz.alt < 0) continue; // below horizon
 
         const geo = tleToGeodetic(tle.line1, tle.line2, now);
-        const transit = nextTransit(0, 0, observerLat, observerLon, now);
+        // nextTransit for satellites is expensive (SGP4 search) — computed
+        // lazily on selection, not during bulk load.
 
         objects.push({
           id: `sat-${tle.line1.slice(2, 7).trim()}`,
@@ -121,7 +121,7 @@ export function useSatellites(
           distanceKm: altAz.rangeSat,
           magnitude: 3.0,
           color: "#00BFFF",
-          nextTransit: transit?.toISOString() ?? null,
+          nextTransit: null, // computed lazily on selection
           lat: geo?.lat,
           lon: geo?.lon,
           altKm: geo?.altKm,
