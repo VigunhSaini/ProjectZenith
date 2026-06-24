@@ -109,3 +109,48 @@ export function formatDist(km: number): string {
   if (km >= 1000) return `${(km / 1000).toFixed(0)}k km`;
   return `${km.toFixed(1)} km`;
 }
+
+/**
+ * Convert Altitude and Azimuth (in degrees) to 3D Cartesian coordinates (X, Y, Z)
+ * on a dome of a given radius.
+ *
+ * Convention:
+ * - Center is (0, 0, 0)
+ * - +Y is Zenith (straight up, Alt = 90)
+ * - +Z is North (Alt = 0, Az = 0)
+ * - +X is East (Alt = 0, Az = 90)
+ */
+export function altAzToXYZ(altDeg: number, azDeg: number, radius: number): [number, number, number] {
+  const altRad = (altDeg * Math.PI) / 180;
+  const azRad = (azDeg * Math.PI) / 180;
+
+  const y = radius * Math.sin(altRad);
+  const horiz = radius * Math.cos(altRad);
+  const x = horiz * Math.sin(azRad);
+  const z = horiz * Math.cos(azRad);
+
+  return [x, y, z];
+}
+
+/**
+ * Convert Right Ascension (in decimal hours 0-24) and Declination (in degrees)
+ * to 3D Cartesian coordinates (X, Y, Z) on a sphere of a given radius.
+ *
+ * Convention (Equatorial frame):
+ * - Pole is +Y (Dec = +90)
+ * - Equator plane is XZ
+ * - RA = 0 is along +Z
+ * - RA = 6h is along +X
+ */
+export function raDecToXYZ(raHours: number, decDeg: number, radius: number): [number, number, number] {
+  const decRad = (decDeg * Math.PI) / 180;
+  const raRad = (raHours * 15 * Math.PI) / 180; // 1 hour = 15 degrees
+
+  const y = radius * Math.sin(decRad);
+  const horiz = radius * Math.cos(decRad);
+  const x = horiz * Math.sin(raRad);
+  const z = horiz * Math.cos(raRad);
+
+  return [x, y, z];
+}
+
