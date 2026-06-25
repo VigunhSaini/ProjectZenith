@@ -30,7 +30,7 @@ export function tleToGeodetic(
   try {
     const satrec = satellite.twoline2satrec(tleLine1, tleLine2);
     const posVel = satellite.propagate(satrec, date);
-    if (!posVel.position || typeof posVel.position === "boolean") return null;
+    if (!posVel || !posVel.position || typeof posVel.position === "boolean") return null;
 
     const gmst = satellite.gstime(date);
     const geo = satellite.eciToGeodetic(posVel.position as satellite.EciVec3<number>, gmst);
@@ -60,7 +60,7 @@ export function tleToAltAz(
   try {
     const satrec = satellite.twoline2satrec(tleLine1, tleLine2);
     const posVel = satellite.propagate(satrec, date);
-    if (!posVel.position || typeof posVel.position === "boolean") return FAILURE;
+    if (!posVel || !posVel.position || typeof posVel.position === "boolean") return FAILURE;
 
     const gmst = satellite.gstime(date);
     const observerGd: satellite.GeodeticLocation = {
@@ -117,7 +117,7 @@ export function nextSatelliteTransit(
     for (let dt = 0; dt <= WINDOW_MS; dt += STEP_MS) {
       const t = new Date(fromDate.getTime() + dt);
       const posVel = satellite.propagate(satrec, t);
-      if (!posVel.position || typeof posVel.position === "boolean") continue;
+      if (!posVel || !posVel.position || typeof posVel.position === "boolean") continue;
 
       const gmst = satellite.gstime(t);
       const lookAngles = satellite.ecfToLookAngles(
