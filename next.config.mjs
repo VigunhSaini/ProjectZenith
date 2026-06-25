@@ -10,6 +10,9 @@ const nextConfig = {
   },
 
   webpack: (config, { isServer }) => {
+    // Disable Webpack persistent cache to prevent chunk file corruption
+    config.cache = false;
+
     // Prevent Cesium from being bundled server-side (it uses browser APIs)
     if (isServer) {
       const externals = Array.isArray(config.externals)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useZenithStore } from "@/store/zenith";
@@ -18,9 +18,59 @@ interface SkyCanvasProps {
   objects: CelestialObject[];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CameraController({ selectedObject, controlsRef }: { selectedObject: CelestialObject | null; controlsRef: React.RefObject<any> }) {
+  const { camera } = useThree();
+  const lastSelectedId = useRef<string | null>(null);
+  const targetPosition = useRef<THREE.Vector3 | null>(null);
+
+  useEffect(() => {
+    if (!selectedObject) {
+      lastSelectedId.current = null;
+      targetPosition.current = null;
+      return;
+    }
+
+    if (selectedObject.id !== lastSelectedId.current) {
+      lastSelectedId.current = selectedObject.id;
+
+      // Calculate direction vector to target
+      const altRad = (selectedObject.alt * Math.PI) / 180;
+      const azRad = (selectedObject.az * Math.PI) / 180;
+      const y = Math.sin(altRad);
+      const horiz = Math.cos(altRad);
+      const x = horiz * Math.sin(azRad);
+      const z = horiz * Math.cos(azRad);
+
+      const currentDistance = camera.position.length();
+      targetPosition.current = new THREE.Vector3(-x * currentDistance, -y * currentDistance, -z * currentDistance);
+    }
+  }, [selectedObject, camera]);
+
+  useFrame(() => {
+    if (!targetPosition.current || !controlsRef.current) return;
+
+    // Check if we have arrived (within small threshold)
+    const dist = camera.position.distanceTo(targetPosition.current);
+    if (dist < 0.01) {
+      targetPosition.current = null; // stop animating
+      return;
+    }
+
+    // Smoothly lerp camera position
+    camera.position.lerp(targetPosition.current, 0.08);
+    camera.lookAt(0, 0, 0);
+    controlsRef.current.update();
+  });
+
+  return null;
+}
+
 export default function SkyCanvas({ objects }: SkyCanvasProps) {
-  const { mode, showGrid, setSelectedObject } = useZenithStore();
+  const { mode, showGrid, setSelectedObject, selectedObject } = useZenithStore();
   const selectObject = setSelectedObject;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const controlsRef = useRef<any>(null);
 
   // Filter central data objects by category for child components
   const planets = objects.filter((o) => o.category === "planet");
@@ -52,6 +102,8 @@ export default function SkyCanvas({ objects }: SkyCanvasProps) {
           selectObject(null);
         }}
       >
+        <CameraController selectedObject={selectedObject} controlsRef={controlsRef} />
+
         {/* Lights */}
         <ambientLight intensity={0.2} />
         <pointLight position={[10, 10, 10]} intensity={1.5} />
@@ -69,6 +121,7 @@ export default function SkyCanvas({ objects }: SkyCanvasProps) {
 
         {/* Controls - Pivot camera around origin, locked to upper hemisphere */}
         <OrbitControls
+          ref={controlsRef}
           enableZoom={true}
           enablePan={false}
           minDistance={1}

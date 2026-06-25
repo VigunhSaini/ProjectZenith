@@ -750,3 +750,33 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
+/* ─── HUD Crosshair Overlay ─────────────────────────────────────────────────── */
+.hud-crosshair-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* Crucial: Allows clicks to pass through to the 3D Canvas */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.hud-ring {
+  width: 48px;
+  height: 48px;
+  border: 1px dashed rgba(0, 255, 102, 0.4);
+  border-radius: 50%;
+  animation: spin 20s linear infinite;
+}
+
+.hud-center-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #00ff66;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00ff66;
+}
+

@@ -74,7 +74,8 @@ export function useSatellites(
 
       const cached = getCachedTLEs();
 
-      if (cached) {
+      // Only use cached TLEs if they represent a full fetch (more than 5 satellites)
+      if (cached && cached.length > 5) {
         setTles(cached);
         setLoading(false);
         return;

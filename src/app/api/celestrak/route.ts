@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { execSync } from "child_process";
 
 export const dynamic = "force-dynamic";
 
@@ -31,30 +32,56 @@ export async function GET() {
   }
 
   try {
-    const celestrakUrl = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=2le";
-    const response = await fetch(celestrakUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
-    });
+    const celestrakUrl = "https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=2le";
+    let text = "";
+    let isFetched = false;
+    let responseStatus = 0;
 
-    if (response.ok) {
-      const text = await response.text();
-      // Ensure the response isn't the error message from CelesTrak
-      if (text.includes("1 ") && text.includes("2 ") && text.split("\n").length > 5) {
-        cachedTlesText = text;
-        lastFetchTime = now;
-        return new NextResponse(text, {
-          headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-            "X-Cache": "MISS",
-          },
-        });
+    try {
+      const response = await fetch(celestrakUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+      });
+      responseStatus = response.status;
+      if (response.ok) {
+        const fetchedText = await response.text();
+        if (fetchedText.includes("1 ") && fetchedText.includes("2 ") && fetchedText.split("\n").length > 5) {
+          text = fetchedText;
+          isFetched = true;
+        }
+      }
+    } catch (e) {
+      console.warn("CelesTrak default fetch failed, trying curl fallback...", e);
+    }
+
+    if (!isFetched) {
+      console.warn(`CelesTrak default fetch returned status ${responseStatus}. Trying curl.exe fallback...`);
+      try {
+        const fetchedText = execSync(`curl.exe -s -A "Mozilla/5.0" "${celestrakUrl}"`, { encoding: "utf-8", timeout: 10000 });
+        if (fetchedText.includes("1 ") && fetchedText.includes("2 ") && fetchedText.split("\n").length > 5) {
+          text = fetchedText;
+          isFetched = true;
+          console.log("CelesTrak curl fallback succeeded!");
+        }
+      } catch (err) {
+        console.error("CelesTrak curl fallback failed:", err);
       }
     }
 
+    if (isFetched) {
+      cachedTlesText = text;
+      lastFetchTime = now;
+      return new NextResponse(text, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-Cache": "MISS",
+        },
+      });
+    }
+
     // If rate-limited or offline, fall back to the last cached TLEs
-    console.warn(`CelesTrak fetch returned status ${response.status}. Serving cached stale data.`);
+    console.warn("CelesTrak all fetch methods failed. Serving cached stale data.");
     return new NextResponse(cachedTlesText, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",

@@ -53,10 +53,13 @@ export default function GlobeView({
         sceneModePicker: false,
         selectionIndicator: false,
         timeline: false,
-        // Photorealistic terrain
+        // Photorealistic terrain (or ellipsoid fallback on auth error)
         terrainProvider: await Cesium.createWorldTerrainAsync({
           requestWaterMask: false,
           requestVertexNormals: true,
+        }).catch((err) => {
+          console.warn("Cesium WorldTerrain failed (likely invalid token). Falling back to EllipsoidTerrainProvider.", err);
+          return new Cesium.EllipsoidTerrainProvider();
         }),
       });
 
@@ -65,10 +68,26 @@ export default function GlobeView({
         return;
       }
 
-      // Remove default imagery and add Bing Aerial
+      // Remove default imagery and add Bing Aerial (or offline fallback on auth error)
       viewer.imageryLayers.removeAll();
-      const imageryProvider = await Cesium.IonImageryProvider.fromAssetId(2);
-      viewer.imageryLayers.addImageryProvider(imageryProvider);
+      try {
+        const imageryProvider = await Cesium.IonImageryProvider.fromAssetId(2);
+        viewer.imageryLayers.addImageryProvider(imageryProvider);
+      } catch {
+        console.warn("Cesium Ion Bing Aerial failed (likely invalid token). Falling back to offline NaturalEarthII imagery.");
+        try {
+          const fallbackProvider = await Cesium.TileMapServiceImageryProvider.fromUrl(
+            Cesium.buildModuleUrl("Assets/Textures/NaturalEarthII")
+          );
+          viewer.imageryLayers.addImageryProvider(fallbackProvider);
+        } catch {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const fallbackProvider = new (Cesium.TileMapServiceImageryProvider as any)({
+            url: Cesium.buildModuleUrl("Assets/Textures/NaturalEarthII")
+          });
+          viewer.imageryLayers.addImageryProvider(fallbackProvider);
+        }
+      }
 
       // Camera initial position — a nice Earth-from-space view
       viewer.scene.camera.setView({
