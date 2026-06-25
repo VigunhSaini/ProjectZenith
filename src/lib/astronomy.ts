@@ -38,6 +38,20 @@ export function raDecToAltAz(
 }
 
 /**
+ * Get Local Sidereal Time (LST) in decimal hours (0 to 24)
+ * for a given date and longitude (east positive).
+ */
+export function getLST(date: Date, lon: number): number {
+  const J2000 = 2451545.0;
+  const MS_PER_DAY = 86400000;
+  const jd = 2440587.5 + date.getTime() / MS_PER_DAY;
+  const T = (jd - J2000) / 36525;
+  const gmst =
+    ((6.697375 + 2400.0513368 * T + 0.0000258 * T * T) % 24 + 24) % 24;
+  return (gmst + lon / 15 + 24) % 24;
+}
+
+/**
  * Find the next meridian transit (upper culmination) of a fixed RA/Dec object
  * within the next 24 hours from `fromDate`. Returns null if none found.
  *
@@ -65,12 +79,7 @@ export function nextTransit(
   let prevHA: number | null = null;
   for (let dt = 0; dt <= maxMs; dt += stepMs) {
     const t = new Date(fromDate.getTime() + dt);
-    const jd = 2440587.5 + t.getTime() / MS_PER_DAY;
-    const T = (jd - J2000) / 36525;
-    // GMST in hours
-    const gmst =
-      ((6.697375 + 2400.0513368 * T + 0.0000258 * T * T) % 24 + 24) % 24;
-    const lst = (gmst + lon / 15 + 24) % 24;
+    const lst = getLST(t, lon);
     // Hour Angle = LST - RA, normalised to [-12, 12)
     let ha = lst - ra;
     if (ha > 12) ha -= 24;

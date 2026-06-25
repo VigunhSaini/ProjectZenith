@@ -9,10 +9,15 @@ interface HUDOverlayProps {
 }
 
 export default function HUDOverlay({ objects }: HUDOverlayProps) {
-  const { selectedObject, setSelectedObject } = useZenithStore();
+  const {
+    selectedObject,
+    setSelectedObject,
+    showGrid,
+    toggleGrid,
+    showConstellations,
+    toggleConstellations,
+  } = useZenithStore();
   const [filter, setFilter] = useState<"all" | "planet" | "satellite" | "star">("all");
-  const [showGrid, setShowGrid] = useState(true);
-  const [showConstellations, setShowConstellations] = useState(true);
 
   // Group and count objects for HUD stats box
   const stats = useMemo(() => {
@@ -146,7 +151,7 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
           <div className="flex items-center justify-between text-[10px] font-bold" style={{ fontFamily: "var(--font-mono)" }}>
             <span className="text-white/40">GRID BOUNDARY LAYER:</span>
             <button
-              onClick={() => setShowGrid(!showGrid)}
+              onClick={toggleGrid}
               className="px-2 py-0.5 rounded border transition-colors"
               style={{
                 borderColor: showGrid ? "#00e5b0" : "rgba(255,255,255,0.1)",
@@ -159,7 +164,7 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
           <div className="flex items-center justify-between text-[10px] font-bold" style={{ fontFamily: "var(--font-mono)" }}>
             <span className="text-white/40">CONSTELLATIONS:</span>
             <button
-              onClick={() => setShowConstellations(!showConstellations)}
+              onClick={toggleConstellations}
               className="px-2 py-0.5 rounded border transition-colors"
               style={{
                 borderColor: showConstellations ? "#00e5b0" : "rgba(255,255,255,0.1)",

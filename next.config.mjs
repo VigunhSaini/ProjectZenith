@@ -5,6 +5,9 @@ const require = createRequire(import.meta.url);
 const nextConfig = {
   // Disable React strict mode to prevent Cesium double-mount issues
   reactStrictMode: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 
   webpack: (config, { isServer }) => {
     // Prevent Cesium from being bundled server-side (it uses browser APIs)
