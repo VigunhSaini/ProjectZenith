@@ -6,6 +6,7 @@ import { useISS } from "./useISS";
 import { useSatellites } from "./useSatellites";
 import { usePlanets } from "./usePlanets";
 import { useStars } from "./useStars";
+import { useZenithStore } from "@/store/zenith";
 
 export interface UseZenithResult {
   /** All above-horizon celestial objects, sorted by altitude descending */
@@ -39,19 +40,29 @@ export function useZenith(
   observerLon: number | null,
   observerAltM = 0
 ): UseZenithResult {
-  const { issObject } = useISS(observerLat, observerLon, observerAltM);
+  const currentTimeMs = useZenithStore((state) => state.currentTime);
+
+  // Convert the numeric timestamp to a Date once per change.
+  // useMemo ensures the same Date reference is reused when the value hasn't changed,
+  // preventing unnecessary re-renders in sub-hook dependency arrays.
+  const currentTime = useMemo(() => new Date(currentTimeMs), [currentTimeMs]);
+
+  const { issObject } = useISS(observerLat, observerLon, observerAltM, currentTime);
   const { satellites, loading: satLoading, error: satError } = useSatellites(
     observerLat,
     observerLon,
-    observerAltM
+    observerAltM,
+    currentTime
   );
   const { planets, loading: planetLoading, error: planetError } = usePlanets(
     observerLat,
-    observerLon
+    observerLon,
+    currentTime
   );
   const { stars, loading: starLoading, error: starError } = useStars(
     observerLat,
-    observerLon
+    observerLon,
+    currentTime
   );
 
   const loading = satLoading || planetLoading || starLoading;
@@ -68,9 +79,9 @@ export function useZenith(
     return all.sort((a, b) => b.alt - a.alt);
   }, [issObject, satellites, planets, stars]);
 
-  // lastUpdated: regenerate when objects array changes identity
+  // lastUpdated: regenerate when objects array changes identity or time changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const lastUpdated = useMemo(() => new Date().toISOString(), [issObject, satellites, planets, stars]);
+  const lastUpdated = useMemo(() => new Date().toISOString(), [issObject, satellites, planets, stars, currentTime]);
 
   return { objects, loading, error, lastUpdated };
 }

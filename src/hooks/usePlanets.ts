@@ -1,16 +1,5 @@
 "use client";
 
-/**
- * usePlanets — computes positions + distances for the 7 naked-eye planets
- * using astronomy-engine entirely client-side.
- *
- * Benefits over the previous JPL Horizons approach:
- *  - No network requests (eliminates rate-limit errors, Bug 5)
- *  - Real geocentric distances in km (fixes hardcoded 1e9, Bug 4)
- *  - Instant results — no async latency
- *  - Works offline
- */
-
 import { useEffect, useState } from "react";
 import * as Astronomy from "astronomy-engine";
 import { CelestialObject } from "@/lib/celestial";
@@ -40,9 +29,9 @@ const PLANETS: PlanetDef[] = [
  * Get the apparent visual magnitude of a planet using astronomy-engine.
  * Falls back to a reasonable fixed value if the call fails.
  */
-function getPlanetMagnitude(body: Astronomy.Body, time: Astronomy.AstroTime): number {
+function getPlanetMagnitude(body: Astronomy.Body, astroTime: Astronomy.AstroTime): number {
   try {
-    return Astronomy.Illumination(body, time).mag;
+    return Astronomy.Illumination(body, astroTime).mag;
   } catch {
     // Fallback magnitudes (approximate)
     const fallback: Partial<Record<Astronomy.Body, number>> = {
@@ -60,7 +49,8 @@ function getPlanetMagnitude(body: Astronomy.Body, time: Astronomy.AstroTime): nu
 
 export function usePlanets(
   observerLat: number | null,
-  observerLon: number | null
+  observerLon: number | null,
+  time: Date = new Date()
 ): { planets: CelestialObject[]; loading: boolean; error: string | null } {
   const [planets, setPlanets] = useState<CelestialObject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,30 +60,31 @@ export function usePlanets(
     if (observerLat === null || observerLon === null) return;
 
     try {
-      const now = new Date();
-      const time = Astronomy.MakeTime(now);
+      setLoading(true);
+      setError(null);
+      const astroTime = Astronomy.MakeTime(time);
       const observer = new Astronomy.Observer(observerLat, observerLon, 0);
 
       const results: CelestialObject[] = [];
 
       for (const planet of PLANETS) {
         // Equatorial coordinates (apparent RA/Dec, J2000)
-        const equatorial = Astronomy.Equator(planet.body, time, observer, true, true);
+        const equatorial = Astronomy.Equator(planet.body, astroTime, observer, true, true);
         const ra  = equatorial.ra;   // decimal hours
         const dec = equatorial.dec;  // decimal degrees
 
         // Horizontal coordinates
-        const hor = Astronomy.Horizon(time, observer, ra, dec, "normal");
+        const hor = Astronomy.Horizon(astroTime, observer, ra, dec, "normal");
         if (hor.altitude < 0) continue; // below horizon
 
         // Geocentric distance in km
         const distanceKm = equatorial.dist * AU_TO_KM;
 
         // Next transit (cheap 1-minute step LST bisection)
-        const transit = nextTransit(ra, dec, observerLat, observerLon, now);
+        const transit = nextTransit(ra, dec, observerLat, observerLon, time);
 
         // Apparent visual magnitude
-        const magnitude = getPlanetMagnitude(planet.body, time);
+        const magnitude = getPlanetMagnitude(planet.body, astroTime);
 
         results.push({
           id: planet.id,
@@ -117,7 +108,7 @@ export function usePlanets(
       setError(err instanceof Error ? err.message : "Planet computation failed");
       setLoading(false);
     }
-  }, [observerLat, observerLon]);
+  }, [observerLat, observerLon, time]);
 
   return { planets, loading, error };
 }

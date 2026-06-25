@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { CelestialObject } from "@/lib/celestial";
 import { raDecToAltAz } from "@/lib/astronomy";
 
@@ -20,9 +20,10 @@ const LY_TO_KM = 9.461e12;
 
 export function useStars(
   observerLat: number | null,
-  observerLon: number | null
+  observerLon: number | null,
+  time: Date = new Date()
 ): { stars: CelestialObject[]; loading: boolean; error: string | null } {
-  const [stars, setStars] = useState<CelestialObject[]>([]);
+  const [hygData, setHygData] = useState<HygStar[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,55 +34,58 @@ export function useStars(
       setLoading(true);
       setError(null);
 
-      let hygData: HygStar[];
       try {
         const res = await fetch(STARS_URL);
         if (!res.ok) throw new Error(`HTTP ${res.status} loading star data`);
-        hygData = await res.json();
+        const data = await res.json();
+        setHygData(data);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load star data"
         );
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const now = new Date();
-      const result: CelestialObject[] = [];
-
-      for (const star of hygData) {
-        const altAz = raDecToAltAz(
-          star.ra,
-          star.dec,
-          observerLat,
-          observerLon,
-          now
-        );
-
-        if (altAz.alt <= 0) continue;
-
-        result.push({
-          id: `star-${star.id}`,
-          name: star.name || `HYG ${star.id}`,
-          category: "star",
-          az: altAz.az,
-          alt: altAz.alt,
-          ra: star.ra,
-          dec: star.dec,
-          distanceKm: star.distLy * LY_TO_KM,
-          magnitude: star.mag,
-          color: star.color,
-          nextTransit: null, // computed lazily on selection
-        });
-      }
-
-      result.sort((a, b) => b.alt - a.alt);
-      setStars(result);
-      setLoading(false);
     };
 
     loadStars();
   }, [observerLat, observerLon]);
+
+  const stars = useMemo(() => {
+    if (observerLat === null || observerLon === null || hygData.length === 0) {
+      return [];
+    }
+
+    const result: CelestialObject[] = [];
+
+    for (const star of hygData) {
+      const altAz = raDecToAltAz(
+        star.ra,
+        star.dec,
+        observerLat,
+        observerLon,
+        time
+      );
+
+      if (altAz.alt <= 0) continue;
+
+      result.push({
+        id: `star-${star.id}`,
+        name: star.name || `HYG ${star.id}`,
+        category: "star",
+        az: altAz.az,
+        alt: altAz.alt,
+        ra: star.ra,
+        dec: star.dec,
+        distanceKm: star.distLy * LY_TO_KM,
+        magnitude: star.mag,
+        color: star.color,
+        nextTransit: null, // computed lazily on selection
+      });
+    }
+
+    return result.sort((a, b) => b.alt - a.alt);
+  }, [hygData, observerLat, observerLon, time]);
 
   return { stars, loading, error };
 }

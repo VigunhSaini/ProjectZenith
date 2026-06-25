@@ -38,3 +38,6 @@ next-env.d.ts
 # Zenith — generated assets (do not commit)
 /public/cesium/
 /public/data/hyg_stars.json
+
+# Local backups
+/.backup_zenith/
