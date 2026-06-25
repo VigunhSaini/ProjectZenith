@@ -199,20 +199,20 @@ function SkyContent() {
                 <div className="absolute inset-0 rounded-full border border-white/5 animate-radar-sweep pointer-events-none" />
                 {/* 30° Ring */}
                 <div className="absolute w-[66.6%] h-[66.6%] inset-0 m-auto rounded-full border border-white/5 flex items-center justify-center">
-                  <span className="absolute top-1 text-[8px] text-white/20 font-bold" style={{ fontFamily: "var(--font-mono)" }}>60°</span>
+                  <span className="absolute text-white/20 font-bold" style={{ fontFamily: "var(--font-mono)", fontSize: `${8 / scale}px`, top: `${4 / scale}px` }}>60°</span>
                 </div>
                 {/* 60° Ring */}
                 <div className="absolute w-[33.3%] h-[33.3%] inset-0 m-auto rounded-full border border-white/5 flex items-center justify-center">
-                  <span className="absolute top-1 text-[8px] text-white/20 font-bold" style={{ fontFamily: "var(--font-mono)" }}>30°</span>
+                  <span className="absolute text-white/20 font-bold" style={{ fontFamily: "var(--font-mono)", fontSize: `${8 / scale}px`, top: `${4 / scale}px` }}>30°</span>
                 </div>
                 {/* Crosshairs */}
                 <div className="absolute w-full h-[1px] top-1/2 bg-white/5" />
                 <div className="absolute h-full w-[1px] left-1/2 bg-white/5" />
                 {/* Compass */}
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-6 text-[10px] font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)" }}>N</span>
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-6 text-[10px] font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)" }}>S</span>
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 text-[10px] font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)" }}>E</span>
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 text-[10px] font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)" }}>W</span>
+                <span className="absolute top-0 left-1/2 font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)", fontSize: `${10 / scale}px`, transform: `translate(-50%, -${24 / scale}px)` }}>N</span>
+                <span className="absolute bottom-0 left-1/2 font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)", fontSize: `${10 / scale}px`, transform: `translate(-50%, ${24 / scale}px)` }}>S</span>
+                <span className="absolute right-0 top-1/2 font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)", fontSize: `${10 / scale}px`, transform: `translate(${24 / scale}px, -50%)` }}>E</span>
+                <span className="absolute left-0 top-1/2 font-bold text-white/40" style={{ fontFamily: "var(--font-orbitron)", fontSize: `${10 / scale}px`, transform: `translate(-${24 / scale}px, -50%)` }}>W</span>
                 {/* Zenith crosshair */}
                 <div className="absolute inset-0 m-auto w-4 h-4 flex items-center justify-center pointer-events-none">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#00e5b0]" />
@@ -254,8 +254,14 @@ function SkyContent() {
                     )}
                     {isScientific && (
                       <span
-                        className="absolute top-3 left-3 text-[9px] text-white/50 truncate max-w-[80px] font-medium"
-                        style={{ fontFamily: "var(--font-inter)" }}
+                        className="absolute text-white/50 truncate font-medium"
+                        style={{
+                          fontFamily: "var(--font-inter)",
+                          fontSize: `${9 / scale}px`,
+                          top: `${12 / scale}px`,
+                          left: `${12 / scale}px`,
+                          maxWidth: `${80 / scale}px`
+                        }}
                       >
                         {obj.name}
                       </span>
