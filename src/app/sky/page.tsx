@@ -226,11 +226,14 @@ function SkyContent() {
             <div className="absolute inset-0 pointer-events-auto">
               {projectedObjects.map((obj) => {
                 const isSelected = selectedObject?.id === obj.id;
+                const isCatalogStar = obj.category === "star" && obj.name.startsWith("HYG");
+                const showLabelByDefault = !isCatalogStar || isSelected;
+
                 return (
                   <button
                     key={obj.id}
                     onClick={() => setSelectedObject(obj)}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 hover:scale-150 outline-none"
+                    className="group absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300 hover:scale-150 outline-none"
                     style={{ left: `${obj.x}%`, top: `${obj.y}%` }}
                     id={`canvas-node-${obj.id}`}
                     title={`${obj.name} (${obj.category})`}
@@ -254,7 +257,9 @@ function SkyContent() {
                     )}
                     {isScientific && (
                       <span
-                        className="absolute text-white/50 truncate font-medium"
+                        className={`absolute text-white/50 truncate font-medium transition-opacity duration-200 ${
+                          showLabelByDefault ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}
                         style={{
                           fontFamily: "var(--font-inter)",
                           fontSize: `${9 / scale}px`,

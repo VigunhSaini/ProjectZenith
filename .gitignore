@@ -41,3 +41,8 @@ next-env.d.ts
 
 # Local backups
 /.backup_zenith/
+
+# Reference documents
+/ProjectZenith_PRD.docx
+/ProjectZenith_Frontend_Spec.md
+/ProjectZenith_Team_Division.md
