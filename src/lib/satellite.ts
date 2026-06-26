@@ -17,6 +17,7 @@ export interface AltAzResult {
 }
 
 const FAILURE: AltAzResult = { az: 0, alt: -1, rangeSat: 0 };
+const RAD_TO_DEG = 180 / Math.PI;
 
 /**
  * Propagate a TLE to geodetic position at the given date.
@@ -75,8 +76,8 @@ export function tleToAltAz(
     );
 
     return {
-      az: (satellite.degreesLat(lookAngles.azimuth) + 360) % 360,
-      alt: satellite.degreesLat(lookAngles.elevation),
+      az: ((lookAngles.azimuth * RAD_TO_DEG) + 360) % 360,
+      alt: lookAngles.elevation * RAD_TO_DEG,
       rangeSat: lookAngles.rangeSat,
     };
   } catch {
@@ -124,7 +125,7 @@ export function nextSatelliteTransit(
         observerGd,
         satellite.eciToEcf(posVel.position as satellite.EciVec3<number>, gmst)
       );
-      const altDeg = satellite.degreesLat(lookAngles.elevation);
+      const altDeg = lookAngles.elevation * RAD_TO_DEG;
 
       if (altDeg > 0) {
         wasAboveHorizon = true;

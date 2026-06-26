@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { prompt } = body;
-
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json({ error: "Prompt must be a non-empty string" }, { status: 400 });
+    const body = await request.json().catch(() => null);
+    if (!body || !body.prompt || typeof body.prompt !== "string") {
+      return NextResponse.json({ error: "Invalid JSON body or missing prompt string" }, { status: 400 });
     }
+    const { prompt } = body;
 
     // Security: cap prompt length to prevent quota abuse / large payload attacks
     const MAX_PROMPT_CHARS = 4000;
@@ -55,7 +54,17 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+    // Handle safety / finish blocks explicitly
+    const candidate = data.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== "STOP") {
+      return NextResponse.json(
+        { error: `Generation stopped: ${candidate.finishReason}` },
+        { status: 422 }
+      );
+    }
+
+    const text = candidate?.content?.parts?.[0]?.text || "";
 
     return NextResponse.json({ text });
   } catch (error) {

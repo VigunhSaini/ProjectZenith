@@ -4,19 +4,15 @@ import { useZenithStore } from "@/store/zenith";
 import ModeToggle from "./ModeToggle";
 import Link from "next/link";
 import { useMemo } from "react";
+import { getLST } from "@/lib/astronomy";
 
 interface TopbarProps {
   totalObjects: number;
 }
 
-// Approximate Local Sidereal Time (LST) calculation matching astronomy.ts
-function getLST(date: Date, lon: number): string {
-  const J2000 = 2451545.0;
-  const MS_PER_DAY = 86400000;
-  const jd = 2440587.5 + date.getTime() / MS_PER_DAY;
-  const T = (jd - J2000) / 36525;
-  const gmst = ((6.697375 + 2400.0513368 * T + 0.0000258 * T * T) % 24 + 24) % 24;
-  const lst = (gmst + lon / 15 + 24) % 24;
+// Format high-precision Local Sidereal Time (LST) from astronomy.ts
+function getFormattedLST(date: Date, lon: number): string {
+  const lst = getLST(date, lon);
 
   const h = Math.floor(lst);
   const m = Math.floor((lst - h) * 60);
@@ -34,7 +30,7 @@ export default function Topbar({ totalObjects }: TopbarProps) {
 
   const lstTime = useMemo(() => {
     if (!location) return "00:00:00";
-    return getLST(activeTime, location.lon);
+    return getFormattedLST(activeTime, location.lon);
   }, [activeTime, location]);
 
   const formattedTime = useMemo(() => {

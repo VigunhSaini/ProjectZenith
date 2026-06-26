@@ -32,7 +32,7 @@ export async function GET() {
   }
 
   try {
-    const celestrakUrl = "https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=2le";
+    const celestrakUrl = "https://celestrak.org/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle";
     let text = "";
     let isFetched = false;
     let responseStatus = 0;

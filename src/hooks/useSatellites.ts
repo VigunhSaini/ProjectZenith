@@ -5,7 +5,7 @@ import { CelestialObject } from "@/lib/celestial";
 import { tleToAltAz, tleToGeodetic } from "@/lib/satellite";
 
 const CELESTRAK_URL = "/api/celestrak";
-const CACHE_KEY = "zenith_satellites_tle";
+const CACHE_KEY = "zenith_satellites_tle_v2";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_SATS = 200;
 

@@ -42,12 +42,8 @@ export function raDecToAltAz(
  * for a given date and longitude (east positive).
  */
 export function getLST(date: Date, lon: number): number {
-  const J2000 = 2451545.0;
-  const MS_PER_DAY = 86400000;
-  const jd = 2440587.5 + date.getTime() / MS_PER_DAY;
-  const T = (jd - J2000) / 36525;
-  const gmst =
-    ((6.697375 + 2400.0513368 * T + 0.0000258 * T * T) % 24 + 24) % 24;
+  const astTime = Astronomy.MakeTime(date);
+  const gmst = Astronomy.SiderealTime(astTime);
   return (gmst + lon / 15 + 24) % 24;
 }
 
@@ -55,7 +51,7 @@ export function getLST(date: Date, lon: number): number {
  * Find the next meridian transit (upper culmination) of a fixed RA/Dec object
  * within the next 24 hours from `fromDate`. Returns null if none found.
  *
- * Uses 1-minute step LST bisection — astronomy-engine's SearchHourAngle only
+ * Uses 1-minute step with sub-minute bisection search — astronomy-engine's SearchHourAngle only
  * works on built-in solar system bodies, not arbitrary RA/Dec coordinates.
  */
 export function nextTransit(
@@ -68,9 +64,6 @@ export function nextTransit(
   // Suppress unused parameter warnings — dec and lat aren't used in LST calc
   void dec;
   void lat;
-
-  const J2000 = 2451545.0;
-  const MS_PER_DAY = 86400000;
 
   // Search in 1-minute steps over 24 hours
   const stepMs = 60 * 1000;
@@ -87,7 +80,24 @@ export function nextTransit(
 
     if (prevHA !== null && prevHA < 0 && ha >= 0) {
       // Negative→positive HA zero crossing = upper transit
-      return new Date(fromDate.getTime() + dt - stepMs / 2);
+      // Bisection search loop over the 1-minute step window to refine transit time
+      let low = fromDate.getTime() + dt - stepMs;
+      let high = fromDate.getTime() + dt;
+
+      for (let i = 0; i < 10; i++) { // 10 iterations yields sub-second accuracy
+        const mid = (low + high) / 2;
+        const midLst = getLST(new Date(mid), lon);
+        let midHa = midLst - ra;
+        if (midHa > 12) midHa -= 24;
+        if (midHa < -12) midHa += 24;
+
+        if (midHa < 0) {
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+      return new Date((low + high) / 2);
     }
     prevHA = ha;
   }

@@ -7,23 +7,31 @@
 
 /**
  * Parse RA from "HH MM SS.ss" or "HH:MM:SS.ss" format into decimal hours.
+ * Supports partial inputs (e.g. "12:30"), defaulting missing components to 0.
  */
 export function parseRA(ra: string): number {
   const parts = ra.trim().split(/[\s:]+/).map(Number);
-  if (parts.length < 3) return NaN;
-  const [h, m, s] = parts;
+  if (parts.length === 0 || isNaN(parts[0])) return NaN;
+  
+  const h = parts[0];
+  const m = parts[1] || 0;
+  const s = parts[2] || 0;
   return h + m / 60 + s / 3600;
 }
 
 /**
  * Parse Declination from "+/-DD MM SS.s" or "+/-DD:MM:SS.s" into decimal degrees.
+ * Supports partial inputs (e.g. "+45 12"), defaulting missing components to 0.
  */
 export function parseDec(dec: string): number {
   const trimmed = dec.trim();
   const sign = trimmed.startsWith("-") ? -1 : 1;
   const parts = trimmed.replace(/^[+-]/, "").split(/[\s:]+/).map(Number);
-  if (parts.length < 3) return NaN;
-  const [d, m, s] = parts;
+  if (parts.length === 0 || isNaN(parts[0])) return NaN;
+  
+  const d = parts[0];
+  const m = parts[1] || 0;
+  const s = parts[2] || 0;
   return sign * (d + m / 60 + s / 3600);
 }
 
