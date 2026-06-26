@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Orbitron, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({
@@ -43,6 +44,7 @@ export default function RootLayout({
         {/* Cesium CSS — served from public/cesium/ via postinstall copy */}
         {/* eslint-disable-next-line @next/next/no-css-tags */}
         <link rel="stylesheet" href="/cesium/Widgets/widgets.css" />
+        <Script src="/cesium/Cesium.js" strategy="beforeInteractive" />
       </head>
       <body className="antialiased bg-black text-white overflow-hidden">
         {children}

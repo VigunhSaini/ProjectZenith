@@ -10,15 +10,7 @@ interface GlobeViewProps {
   onGlobeReady?: (viewer: unknown) => void;
 }
 
-// Dynamically import Cesium to avoid SSR issues
-let CesiumModule: typeof import("cesium") | null = null;
 
-async function getCesium() {
-  if (!CesiumModule) {
-    CesiumModule = await import("cesium");
-  }
-  return CesiumModule;
-}
 
 export default function GlobeView({
   onLocationSelect,
@@ -36,12 +28,16 @@ export default function GlobeView({
     const initCesium = async () => {
       if (!containerRef.current || viewerRef.current) return;
 
+      const Cesium = (window as any).Cesium;
+      if (!Cesium) {
+        console.error("Cesium failed to load from global script.");
+        return;
+      }
+
       // Explicitly fallback the base URL on the window object for production environments
       if (typeof window !== "undefined") {
         (window as any).CESIUM_BASE_URL = "/cesium";
       }
-
-      const Cesium = await getCesium();
 
       Cesium.Ion.defaultAccessToken =
         process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN || "";
@@ -62,7 +58,7 @@ export default function GlobeView({
         terrainProvider: await Cesium.createWorldTerrainAsync({
           requestWaterMask: false,
           requestVertexNormals: true,
-        }).catch((err) => {
+        }).catch((err: any) => {
           console.warn("Cesium WorldTerrain failed (likely invalid token). Falling back to EllipsoidTerrainProvider.", err);
           return new Cesium.EllipsoidTerrainProvider();
         }),
@@ -153,8 +149,9 @@ export default function GlobeView({
     if (!flyToLocation || !viewerRef.current) return;
     const viewer = viewerRef.current;
 
-    const flyTo = async () => {
-      const Cesium = await getCesium();
+    const flyTo = () => {
+      const Cesium = (window as any).Cesium;
+      if (!Cesium) return;
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(
           flyToLocation.lon,
@@ -170,7 +167,7 @@ export default function GlobeView({
       });
     };
 
-    flyTo().catch(console.error);
+    flyTo();
   }, [flyToLocation]);
 
   return (

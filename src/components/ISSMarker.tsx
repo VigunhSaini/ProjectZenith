@@ -10,11 +10,7 @@ interface ISSMarkerProps {
   observerLon: number | null;
 }
 
-let CesiumModule: typeof import("cesium") | null = null;
-async function getCesium() {
-  if (!CesiumModule) CesiumModule = await import("cesium");
-  return CesiumModule;
-}
+
 
 export default function ISSMarker({
   viewer,
@@ -29,8 +25,9 @@ export default function ISSMarker({
 
     const cesiumViewer = viewer as Viewer;
 
-    const updateMarker = async () => {
-      const Cesium = await getCesium();
+    const updateMarker = () => {
+      const Cesium = (window as any).Cesium;
+      if (!Cesium) return;
 
       const position = Cesium.Cartesian3.fromDegrees(
         issPosition.lon,
@@ -72,7 +69,7 @@ export default function ISSMarker({
       entityRef.current = entity;
     };
 
-    updateMarker().catch(console.error);
+    updateMarker();
   }, [issPosition, viewer]);
 
   // Cleanup on unmount
