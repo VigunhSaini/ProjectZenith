@@ -20,6 +20,9 @@ export interface ZenithStore {
   showGrid: boolean;
   showConstellations: boolean;
   hoveredObject: CelestialObject | null;
+  tutorialActive: boolean;
+  tutorialStepIndex: number;
+  activeTutorialScreen: "globe" | "sky";
   setMode: (mode: Mode) => void;
   setLocation: (location: ObserverLocation | null) => void;
   setSelectedObject: (selectedObject: CelestialObject | null) => void;
@@ -30,6 +33,13 @@ export interface ZenithStore {
   setGrid: (showGrid: boolean) => void;
   toggleConstellations: () => void;
   setShowConstellations: (showConstellations: boolean) => void;
+  setTutorialActive: (active: boolean) => void;
+  setTutorialStepIndex: (index: number) => void;
+  setActiveTutorialScreen: (screen: "globe" | "sky") => void;
+  startTutorial: (screen: "globe" | "sky") => void;
+  nextTutorialStep: () => void;
+  prevTutorialStep: () => void;
+  skipTutorial: () => void;
 }
 
 export const useZenithStore = create<ZenithStore>((set) => ({
@@ -41,6 +51,9 @@ export const useZenithStore = create<ZenithStore>((set) => ({
   showSkyprint: false,
   showGrid: false,
   showConstellations: true,
+  tutorialActive: false,
+  tutorialStepIndex: 0,
+  activeTutorialScreen: "globe",
   setMode: (mode) => set({ mode }),
   setLocation: (location) => set({ location }),
   setSelectedObject: (selectedObject) => set({ selectedObject }),
@@ -51,4 +64,20 @@ export const useZenithStore = create<ZenithStore>((set) => ({
   setGrid: (showGrid) => set({ showGrid }),
   toggleConstellations: () => set((state) => ({ showConstellations: !state.showConstellations })),
   setShowConstellations: (showConstellations) => set({ showConstellations }),
+  setTutorialActive: (active) => set({ tutorialActive: active }),
+  setTutorialStepIndex: (index) => set({ tutorialStepIndex: index }),
+  setActiveTutorialScreen: (screen) => set({ activeTutorialScreen: screen }),
+  startTutorial: (screen) =>
+    set({
+      tutorialActive: true,
+      tutorialStepIndex: 0,
+      activeTutorialScreen: screen,
+    }),
+  nextTutorialStep: () => set((state) => ({ tutorialStepIndex: state.tutorialStepIndex + 1 })),
+  prevTutorialStep: () => set((state) => ({ tutorialStepIndex: Math.max(0, state.tutorialStepIndex - 1) })),
+  skipTutorial: () => {
+    localStorage.setItem("zenith-tutorial-v1", "true");
+    set({ tutorialActive: false, tutorialStepIndex: 0 });
+  },
 }));
+

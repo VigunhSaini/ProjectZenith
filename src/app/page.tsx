@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import LocationSearch from "@/components/LocationSearch";
+import OnboardingTutorial from "@/components/ui/OnboardingTutorial";
 
 // Dynamic import — CesiumJS cannot run during SSR
 const GlobeView = dynamic(() => import("@/components/GlobeView"), {
@@ -31,9 +32,14 @@ export default function LandingPage() {
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [cesiumViewer, setCesiumViewer] = useState<unknown>(null);
+  const [isGlobeFullyLoaded, setIsGlobeFullyLoaded] = useState(false);
 
   const handleGlobeReady = useCallback((viewer: unknown) => {
     setCesiumViewer(viewer);
+  }, []);
+
+  const handleGlobeFullyLoaded = useCallback(() => {
+    setIsGlobeFullyLoaded(true);
   }, []);
 
   const handleLocationSelect = useCallback(
@@ -59,6 +65,14 @@ export default function LandingPage() {
     [handleLocationSelect]
   );
 
+  const handleNextFromGlobe = useCallback(() => {
+    if (selectedLocation) {
+      handleLocationSelect(selectedLocation.lat, selectedLocation.lon, selectedLocation.name);
+    } else {
+      handleLocationSelect(51.5074, -0.1278, "London");
+    }
+  }, [selectedLocation, handleLocationSelect]);
+
   return (
     <main className="globe-page" id="main-landing">
       {/* Full-screen globe */}
@@ -66,6 +80,7 @@ export default function LandingPage() {
         onLocationSelect={handleGlobeClick}
         flyToLocation={flyTarget}
         onGlobeReady={handleGlobeReady}
+        onGlobeFullyLoaded={handleGlobeFullyLoaded}
       />
 
       {/* ISS marker on globe */}
@@ -108,6 +123,12 @@ export default function LandingPage() {
           <LocationSearch onLocationSelect={handleLocationSelect} />
         </div>
       )}
+
+      <OnboardingTutorial
+        currentScreen="globe"
+        isLoaded={isGlobeFullyLoaded}
+        onNavigateToSky={handleNextFromGlobe}
+      />
     </main>
   );
 }

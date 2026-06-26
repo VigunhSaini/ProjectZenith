@@ -8,6 +8,7 @@ interface GlobeViewProps {
   flyToLocation?: { lat: number; lon: number } | null;
   /** Called once the Cesium Viewer is fully initialised */
   onGlobeReady?: (viewer: unknown) => void;
+  onGlobeFullyLoaded?: () => void;
 }
 
 
@@ -16,6 +17,7 @@ export default function GlobeView({
   onLocationSelect,
   flyToLocation,
   onGlobeReady,
+  onGlobeFullyLoaded,
 }: GlobeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
@@ -24,6 +26,7 @@ export default function GlobeView({
   // Initialize Cesium viewer
   useEffect(() => {
     let mounted = true;
+    let unsubscribeTileListener: (() => void) | null = null;
 
     const initCesium = async () => {
       if (!containerRef.current || viewerRef.current) return;
@@ -126,6 +129,16 @@ export default function GlobeView({
       clickHandlerRef.current = handler;
       viewerRef.current = viewer;
 
+      // Listen for tile load progress
+      let initialLoadTriggered = false;
+      const unsubscribe = viewer.scene.globe.tileLoadProgressEvent.addEventListener((queueLength: number) => {
+        if (queueLength === 0 && !initialLoadTriggered) {
+          initialLoadTriggered = true;
+          onGlobeFullyLoaded?.();
+        }
+      });
+      unsubscribeTileListener = unsubscribe;
+
       // Notify parent that the viewer is ready
       onGlobeReady?.(viewer);
     };
@@ -134,6 +147,9 @@ export default function GlobeView({
 
     return () => {
       mounted = false;
+      if (unsubscribeTileListener) {
+        unsubscribeTileListener();
+      }
       if (clickHandlerRef.current) {
         (clickHandlerRef.current as { destroy(): void }).destroy();
       }

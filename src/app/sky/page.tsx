@@ -11,6 +11,7 @@ import ObjectCard from "@/components/ui/ObjectCard";
 import TelemetryPanel from "@/components/ui/TelemetryPanel";
 import SkyprintModal from "@/components/ui/SkyprintModal";
 import dynamic from "next/dynamic";
+import OnboardingTutorial from "@/components/ui/OnboardingTutorial";
 
 const SkyCanvas = dynamic(() => import("@/components/SkyCanvas"), {
   ssr: false,
@@ -92,6 +93,11 @@ function SkyContent() {
       <TelemetryPanel />
       <Timeline />
       <SkyprintModal objects={objects} />
+      <OnboardingTutorial
+        currentScreen="sky"
+        isLoaded={!loading}
+        objects={objects}
+      />
     </main>
   );
 }

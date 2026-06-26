@@ -58,6 +58,7 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
           borderColor: "rgba(0, 212, 255, 0.15)",
           boxShadow: "0 0 30px rgba(0, 0, 0, 0.6)",
         }}
+        id="hud-sidebar-panel"
       >
         {/* Sidebar Header */}
         <div className="p-4 border-b border-white/5">
