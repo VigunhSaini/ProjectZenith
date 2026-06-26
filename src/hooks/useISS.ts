@@ -138,24 +138,28 @@ export function useISS(
 
       setIssPosition({ lat, lon, altKm });
 
-      setIssObject({
-        id: `sat-${ISS_NORAD_ID}`,
-        name: "ISS (Zarya)",
-        category: "iss",
-        az: altAz.az,
-        alt: altAz.alt,
-        ra: 0,
-        dec: 0,
-        distanceKm: altAz.rangeSat,
-        magnitude: -3.0,
-        color: "#FF8C00",
-        // nextTransit intentionally null: ISS is a fast-moving LEO object —
-        // the fixed-star LST bisection in nextTransit() is not meaningful for it.
-        nextTransit: null,
-        lat,
-        lon,
-        altKm,
-      });
+      if (altAz.alt >= 10) {
+        setIssObject({
+          id: `sat-${ISS_NORAD_ID}`,
+          name: "ISS (Zarya)",
+          category: "iss",
+          az: altAz.az,
+          alt: altAz.alt,
+          ra: 0,
+          dec: 0,
+          distanceKm: altAz.rangeSat,
+          magnitude: -3.0,
+          color: "#FF8C00",
+          // nextTransit intentionally null: ISS is a fast-moving LEO object —
+          // the fixed-star LST bisection in nextTransit() is not meaningful for it.
+          nextTransit: null,
+          lat,
+          lon,
+          altKm,
+        });
+      } else {
+        setIssObject(null);
+      }
     };
 
     updateISS();

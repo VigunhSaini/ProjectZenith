@@ -144,3 +144,75 @@ export function nextSatelliteTransit(
     return null;
   }
 }
+
+/**
+ * Safely parse TLE lines into a satellite record.
+ * Returns null if parsing fails.
+ */
+export function parseTleToSatrec(tleLine1: string, tleLine2: string): satellite.SatRec | null {
+  try {
+    return satellite.twoline2satrec(tleLine1, tleLine2);
+  } catch {
+    return null;
+  }
+}
+
+export interface PropagatedSatResult {
+  alt: number;
+  az: number;
+  rangeSat: number;
+  geo: GeodeticPosition | null;
+}
+
+/**
+ * Propagate a pre-parsed satellite record, compute look angles, and return positions.
+ * Geodetic coordinates are only calculated if the satellite is above 10 degrees elevation.
+ */
+export function propagateSatrec(
+  satrec: satellite.SatRec,
+  observerLat: number,
+  observerLon: number,
+  observerAltM: number,
+  date: Date
+): PropagatedSatResult | null {
+  try {
+    const posVel = satellite.propagate(satrec, date);
+    if (!posVel || !posVel.position || typeof posVel.position === "boolean") return null;
+
+    const gmst = satellite.gstime(date);
+    const observerGd: satellite.GeodeticLocation = {
+      latitude: satellite.degreesToRadians(observerLat),
+      longitude: satellite.degreesToRadians(observerLon),
+      height: observerAltM / 1000,
+    };
+
+    const lookAngles = satellite.ecfToLookAngles(
+      observerGd,
+      satellite.eciToEcf(posVel.position as satellite.EciVec3<number>, gmst)
+    );
+
+    const alt = lookAngles.elevation * RAD_TO_DEG;
+    const az = ((lookAngles.azimuth * RAD_TO_DEG) + 360) % 360;
+
+    // Only compute geodetic position if it passes the 10 degree visibility limit to save CPU
+    let geo: GeodeticPosition | null = null;
+    if (alt >= 10) {
+      const geoLoc = satellite.eciToGeodetic(posVel.position as satellite.EciVec3<number>, gmst);
+      geo = {
+        lat: satellite.degreesLat(geoLoc.latitude),
+        lon: satellite.degreesLong(geoLoc.longitude),
+        altKm: geoLoc.height,
+      };
+    }
+
+    return {
+      alt,
+      az,
+      rangeSat: lookAngles.rangeSat,
+      geo,
+    };
+  } catch {
+    return null;
+  }
+}
+
