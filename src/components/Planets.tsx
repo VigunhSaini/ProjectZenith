@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useZenithStore } from "@/store/zenith";
@@ -46,7 +46,7 @@ export default function Planets({ planets }: PlanetsProps) {
 }
 
 interface PlanetMeshProps {
-  planet: any;
+  planet: CelestialObject;
   position: THREE.Vector3;
   isSelected: boolean;
   isHovered: boolean;

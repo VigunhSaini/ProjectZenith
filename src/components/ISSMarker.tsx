@@ -26,7 +26,7 @@ export default function ISSMarker({
     const cesiumViewer = viewer as Viewer;
 
     const updateMarker = () => {
-      const Cesium = (window as any).Cesium;
+      const Cesium = window.Cesium;
       if (!Cesium) return;
 
       const position = Cesium.Cartesian3.fromDegrees(

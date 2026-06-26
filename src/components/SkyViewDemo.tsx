@@ -5,14 +5,12 @@ import { useStore } from "@/lib/store";
 import { useZenith } from "@/hooks/useZenith";
 import SkyCanvas from "./SkyCanvas";
 import LocationSearch from "./LocationSearch";
-import GlobeView from "./GlobeView";
-import ISSMarker from "./ISSMarker";
 
 export default function SkyViewDemo() {
-  const { location, setLocation, currentTime, setCurrentTime, mode, setMode, selectedObject } = useStore();
+  const { location, setLocation, setCurrentTime, mode, setMode, selectedObject } = useStore();
 
   // Master data hook that fetches stars, planets, satellites, and ISS visible at zenith
-  const { objects, loading, error } = useZenith(
+  const { objects, loading } = useZenith(
     location ? location.lat : null,
     location ? location.lon : null
   );

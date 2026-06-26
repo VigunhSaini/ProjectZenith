@@ -28,7 +28,7 @@ export default function GlobeView({
     const initCesium = async () => {
       if (!containerRef.current || viewerRef.current) return;
 
-      const Cesium = (window as any).Cesium;
+      const Cesium = window.Cesium;
       if (!Cesium) {
         console.error("Cesium failed to load from global script.");
         return;
@@ -36,7 +36,7 @@ export default function GlobeView({
 
       // Explicitly fallback the base URL on the window object for production environments
       if (typeof window !== "undefined") {
-        (window as any).CESIUM_BASE_URL = "/cesium";
+        window.CESIUM_BASE_URL = "/cesium";
       }
 
       Cesium.Ion.defaultAccessToken =
@@ -58,7 +58,7 @@ export default function GlobeView({
         terrainProvider: await Cesium.createWorldTerrainAsync({
           requestWaterMask: false,
           requestVertexNormals: true,
-        }).catch((err: any) => {
+        }).catch((err: unknown) => {
           console.warn("Cesium WorldTerrain failed (likely invalid token). Falling back to EllipsoidTerrainProvider.", err);
           return new Cesium.EllipsoidTerrainProvider();
         }),
@@ -150,7 +150,7 @@ export default function GlobeView({
     const viewer = viewerRef.current;
 
     const flyTo = () => {
-      const Cesium = (window as any).Cesium;
+      const Cesium = window.Cesium;
       if (!Cesium) return;
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(

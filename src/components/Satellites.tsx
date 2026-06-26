@@ -114,7 +114,7 @@ function SatelliteMesh({ sat, isSelected, isHovered, onClick, onHover }: Satelli
     <group>
       {/* 1. Fading Orbit Trail (hidden on mobile for performance) */}
       {!isMobile && (
-        <line ref={trailRef as any}>
+        <line ref={trailRef as unknown as React.Ref<SVGLineElement>}>
           <bufferGeometry />
           <lineBasicMaterial
             color="#00BFFF"

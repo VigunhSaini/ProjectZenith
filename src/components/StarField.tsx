@@ -20,7 +20,7 @@ interface StarData {
 const STAR_SPHERE_RADIUS = 400; // Radius of the celestial dome
 
 export default function StarField() {
-  const { location, currentTime, mode } = useZenithStore();
+  const { location, currentTime } = useZenithStore();
   const [stars, setStars] = useState<StarData[]>([]);
   
   const tiltedGroupRef = useRef<THREE.Group>(null);
@@ -41,7 +41,7 @@ export default function StarField() {
   }, []);
 
   // Construct geometry when star data changes
-  const starBuffers = useEffect(() => {
+  useEffect(() => {
     if (stars.length === 0 || !geometryRef.current) return;
 
     // Filter stars for mobile/performance if needed

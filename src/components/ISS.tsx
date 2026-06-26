@@ -90,7 +90,7 @@ export default function ISS({ issObject }: ISSProps) {
     <group>
       {/* 1. Long Orange Orbit Trail */}
       {!isMobile && (
-        <line ref={trailRef as any}>
+        <line ref={trailRef as unknown as React.Ref<SVGLineElement>}>
           <bufferGeometry />
           <lineBasicMaterial
             color="#FF8C00"
