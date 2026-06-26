@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "node -e \"const fs = require('fs'); fs.rmSync('.next', {recursive:true,force:true})\" && next dev",
-    "build": "node -e \"const fs = require('fs'); fs.rmSync('.next', {recursive:true,force:true})\" && next build",
+    "copy-cesium": "node scripts/copy-cesium-assets.mjs",
+    "build": "node -e \"const fs = require('fs'); fs.rmSync('.next', {recursive:true,force:true})\" && npm run copy-cesium && next build",
     "start": "next start",
     "lint": "next lint",
     "prepare-stars": "npx tsx scripts/prepare_stars.ts",

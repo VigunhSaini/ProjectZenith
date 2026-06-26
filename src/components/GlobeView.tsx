@@ -36,6 +36,11 @@ export default function GlobeView({
     const initCesium = async () => {
       if (!containerRef.current || viewerRef.current) return;
 
+      // Explicitly fallback the base URL on the window object for production environments
+      if (typeof window !== "undefined") {
+        (window as any).CESIUM_BASE_URL = "/cesium";
+      }
+
       const Cesium = await getCesium();
 
       Cesium.Ion.defaultAccessToken =
