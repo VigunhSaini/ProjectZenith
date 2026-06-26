@@ -29,11 +29,88 @@ const MAG_LIMIT = 5.0;
 interface StarRecord {
   id: number;
   name: string;
+  designation: string;
   ra: number;    // decimal hours
   dec: number;   // decimal degrees
   mag: number;
   color: string; // CSS hex
   distLy: number;
+}
+
+const GREEK_MAP: Record<string, string> = {
+  Alp: "Alpha", Bet: "Beta", Gam: "Gamma", Del: "Delta", Eps: "Epsilon",
+  Zet: "Zeta", Eta: "Eta", The: "Theta", Iot: "Iota", Kap: "Kappa",
+  Lam: "Lambda", Mu: "Mu", Nu: "Nu", Xi: "Xi", Omi: "Omicron",
+  Pi: "Pi", Rho: "Rho", Sig: "Sigma", Tau: "Tau", Ups: "Upsilon",
+  Phi: "Phi", Chi: "Chi", Psi: "Psi", Ome: "Omega"
+};
+
+const CONSTELLATION_MAP: Record<string, string> = {
+  And: "Andromedae", Ant: "Antliae", Aps: "Apodis", Aqr: "Aquarii", Aql: "Aquilae",
+  Ara: "Arae", Ari: "Arietis", Aur: "Aurigae", Boo: "Boötis", Cae: "Caeli",
+  Cam: "Camelopardalis", Cnc: "Cancri", CVn: "Canum Venaticorum", CMa: "Canis Majoris",
+  CMi: "Canis Minoris", Cap: "Capricorni", Car: "Carinae", Cas: "Cassiopeiae",
+  Cen: "Centauri", Cep: "Cephei", Cet: "Ceti", Cha: "Chamaeleontis", Cir: "Circini",
+  Col: "Columbae", Com: "Comae Berenices", CrA: "Coronae Australis", CrB: "Coronae Borealis",
+  Crv: "Corvi", Crt: "Crateris", Cru: "Crucis", Cyg: "Cygni", Del: "Delphini",
+  Dor: "Doradus", Dra: "Draconis", Equ: "Equulei", Eri: "Eridani", For: "Fornacis",
+  Gem: "Geminorum", Gru: "Gruis", Her: "Herculis", Hor: "Horologii", Hya: "Hydrae",
+  Hyi: "Hydri", Ind: "Indi", Lac: "Lacertae", Leo: "Leonis", LMi: "Leonis Minoris",
+  Lep: "Leporis", Lib: "Librae", Lup: "Lupi", Lyn: "Lyncis", Lyr: "Lyrae",
+  Men: "Mensae", Mic: "Microscopii", Mon: "Monocerotis", Mus: "Muscae", Nor: "Normae",
+  Oct: "Octantis", Oph: "Ophiuchi", Ori: "Orionis", Pav: "Pavonis", Peg: "Pegasi",
+  Per: "Persei", Phe: "Phoenicis", Pic: "Pictoris", Psc: "Piscium", PsA: "Piscis Austrini",
+  Pup: "Puppis", Pyx: "Pyxidis", Ret: "Reticuli", Sge: "Sagittae", Sgr: "Sagittarii",
+  Sco: "Scorpii", Scl: "Sculptoris", Sct: "Scuti", Ser: "Serpentis", Sex: "Sextantis",
+  Tau: "Tauri", Tel: "Telescopii", Tri: "Trianguli", TrA: "Trianguli Australis",
+  Tuc: "Tucanae", UMa: "Ursae Majoris", UMi: "Ursae Minoris", Vel: "Velorum",
+  Vir: "Virginis", Vol: "Volantis", Vul: "Vulpeculae"
+};
+
+function formatDesignation(
+  bayer: string,
+  flam: string,
+  con: string,
+  hr: string,
+  hd: string,
+  gl: string,
+  id: string
+): string {
+  // 1. Try Bayer/Flamsteed Designation
+  if (bayer || flam) {
+    const greekPart = bayer ? bayer.split("-")[0] : "";
+    const subPart = bayer && bayer.includes("-") ? bayer.split("-")[1] : "";
+    const greekName = GREEK_MAP[greekPart] || greekPart;
+    const conName = CONSTELLATION_MAP[con] || con;
+    
+    let des = "";
+    if (flam) des += flam + " ";
+    if (greekName) {
+      des += greekName;
+      if (subPart) des += " " + subPart;
+      des += " ";
+    }
+    if (conName) des += conName;
+    return des.trim();
+  }
+  
+  // 2. Try Yale Bright Star (HR)
+  if (hr) {
+    return `HR ${hr}`;
+  }
+  
+  // 3. Try Henry Draper (HD)
+  if (hd) {
+    return `HD ${hd}`;
+  }
+  
+  // 4. Try Gliese
+  if (gl) {
+    return `Gliese ${gl}`;
+  }
+  
+  // 5. Fallback to HYG ID
+  return `HYG ${id}`;
 }
 
 /**
@@ -112,6 +189,12 @@ async function main() {
   const idx = {
     id:     header.indexOf("id"),
     proper: header.indexOf("proper"),
+    bayer:  header.indexOf("bayer"),
+    flam:   header.indexOf("flam"),
+    con:    header.indexOf("con"),
+    hr:     header.indexOf("hr"),
+    hd:     header.indexOf("hd"),
+    gl:     header.indexOf("gl"),
     ra:     header.indexOf("ra"),
     dec:    header.indexOf("dec"),
     dist:   header.indexOf("dist"),
@@ -143,9 +226,17 @@ async function main() {
     const bvRaw = idx.ci >= 0 ? parseFloat(cols[idx.ci]) : NaN;
     const bv = isNaN(bvRaw) ? null : bvRaw;
 
+    const bayer = idx.bayer >= 0 ? cols[idx.bayer] : "";
+    const flam = idx.flam >= 0 ? cols[idx.flam] : "";
+    const con = idx.con >= 0 ? cols[idx.con] : "";
+    const hr = idx.hr >= 0 ? cols[idx.hr] : "";
+    const hd = idx.hd >= 0 ? cols[idx.hd] : "";
+    const gl = idx.gl >= 0 ? cols[idx.gl] : "";
+
     stars.push({
       id: parseInt(cols[idx.id], 10) || i,
       name: (idx.proper >= 0 ? cols[idx.proper] : "") || "",
+      designation: formatDesignation(bayer, flam, con, hr, hd, gl, cols[idx.id]),
       ra,
       dec,
       mag,

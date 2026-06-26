@@ -9,6 +9,7 @@ const STARS_URL = "/data/hyg_stars.json";
 interface HygStar {
   id: number;
   name: string;
+  designation: string;
   ra: number;   // decimal hours
   dec: number;  // decimal degrees
   mag: number;
@@ -69,9 +70,14 @@ export function useStars(
 
       if (altAz.alt <= 0) continue;
 
+      // Only include named stars or very bright stars (magnitude < 3.0)
+      const hasName = star.name && star.name.trim() !== "";
+      const isBright = star.mag < 3.0;
+      if (!hasName && !isBright) continue;
+
       result.push({
         id: `star-${star.id}`,
-        name: star.name || `HYG ${star.id}`,
+        name: hasName ? star.name : star.designation,
         category: "star",
         az: altAz.az,
         alt: altAz.alt,
