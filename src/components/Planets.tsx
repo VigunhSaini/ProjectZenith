@@ -59,9 +59,11 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
   const ringRef = useRef<THREE.Mesh>(null);
   const sphereRef = useRef<THREE.Mesh>(null);
 
-  // Dynamic scale factor for hover and selection
+  const isDim = planet.magnitude !== undefined && planet.magnitude > 6.5;
+
+  // Dynamic scale factor for hover and selection (dimmer planets are scaled down slightly)
   const baseScale = getBasePlanetScale(planet.name);
-  const scale = baseScale * (isSelected ? 1.4 : isHovered ? 1.2 : 1.0);
+  const scale = baseScale * (isSelected ? 1.4 : isHovered ? 1.2 : 1.0) * (isDim ? 0.6 : 1.0);
 
   // Slowly rotate the planet and spin the selection ring
   useFrame((state) => {
@@ -86,6 +88,12 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
   const material = useMemo(() => {
     return getPlanetMaterial(planet.name, planet.color);
   }, [planet.name, planet.color]);
+
+  // Handle transparency/opacity dynamically for dim planets
+  useEffect(() => {
+    material.transparent = isDim;
+    material.opacity = isDim ? 0.35 : 1.0;
+  }, [material, isDim]);
 
   // Clean up WebGL resources
   useEffect(() => {

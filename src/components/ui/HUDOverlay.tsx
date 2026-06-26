@@ -99,6 +99,7 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
             filteredObjects.map((obj) => {
               const isSelected = selectedObject?.id === obj.id;
               const color = categoryColors[obj.category] || "#fff";
+              const isDim = obj.magnitude !== undefined && obj.magnitude > 6.5;
               return (
                 <div
                   key={obj.id}
@@ -107,18 +108,28 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
                   style={{
                     backgroundColor: isSelected ? "rgba(0, 229, 176, 0.08)" : "rgba(255, 255, 255, 0.02)",
                     borderColor: isSelected ? "#00e5b0" : "rgba(255, 255, 255, 0.05)",
+                    opacity: isDim ? 0.55 : 1.0,
                   }}
                   id={`hud-item-${obj.id}`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 max-w-[170px] truncate">
                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
                       <span
-                        className="text-xs font-bold text-white truncate max-w-[140px]"
+                        className="text-xs font-bold text-white truncate max-w-[95px]"
                         style={{ fontFamily: "var(--font-inter)" }}
                       >
                         {obj.name}
                       </span>
+                      {isDim && (
+                        <span
+                          className="text-[8px] text-[#ffaa00] border border-[#ffaa00]/25 px-1 rounded flex items-center font-bold tracking-tight bg-[#ffaa00]/5 scale-90"
+                          style={{ fontFamily: "var(--font-mono)" }}
+                          title="Optical aid required (mag > 6.5)"
+                        >
+                          🔭 AID
+                        </span>
+                      )}
                     </div>
                     <span
                       className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"

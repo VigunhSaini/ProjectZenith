@@ -75,7 +75,7 @@ export function usePlanets(
 
         // Horizontal coordinates
         const hor = Astronomy.Horizon(astroTime, observer, ra, dec, "normal");
-        if (hor.altitude < 0) continue; // below horizon
+        if (hor.altitude < 5) continue; // below 5 degrees (unobservable due to horizon extinction)
 
         // Geocentric distance in km
         const distanceKm = equatorial.dist * AU_TO_KM;
