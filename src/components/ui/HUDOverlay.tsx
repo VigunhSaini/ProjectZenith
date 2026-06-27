@@ -100,7 +100,25 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
             filteredObjects.map((obj) => {
               const isSelected = selectedObject?.id === obj.id;
               const color = categoryColors[obj.category] || "#fff";
-              const isDim = obj.magnitude !== undefined && obj.magnitude > 6.5;
+              let dotColor = color;
+              let isDim = false;
+              let showBinoBadge = false;
+              let showTelBadge = false;
+
+              if (obj.category === "planet" && obj.magnitude !== undefined) {
+                if (obj.magnitude > 7.0) {
+                  dotColor = "#9ca3af"; // grey dot
+                  isDim = true;
+                  showTelBadge = true;
+                } else if (obj.magnitude > 6.0) {
+                  dotColor = "#eab308"; // yellow dot
+                  isDim = true;
+                  showBinoBadge = true;
+                }
+              } else {
+                isDim = obj.magnitude !== undefined && obj.magnitude > 6.5;
+              }
+
               return (
                 <div
                   key={obj.id}
@@ -115,14 +133,32 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2 max-w-[170px] truncate">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: dotColor }} />
                       <span
                         className="text-xs font-bold text-white truncate max-w-[95px]"
                         style={{ fontFamily: "var(--font-inter)" }}
                       >
                         {obj.name}
                       </span>
-                      {isDim && (
+                      {showBinoBadge && (
+                        <span
+                          className="text-[8px] text-[#eab308] border border-[#eab308]/25 px-1 rounded flex items-center font-bold tracking-tight bg-[#eab308]/5 scale-90 animate-pulse"
+                          style={{ fontFamily: "var(--font-mono)" }}
+                          title="Binoculars required (mag 6.0 - 7.0)"
+                        >
+                          👓 BINO
+                        </span>
+                      )}
+                      {showTelBadge && (
+                        <span
+                          className="text-[8px] text-[#9ca3af] border border-[#9ca3af]/25 px-1 rounded flex items-center font-bold tracking-tight bg-[#9ca3af]/5 scale-90 animate-pulse"
+                          style={{ fontFamily: "var(--font-mono)" }}
+                          title="Telescope required (mag > 7.0)"
+                        >
+                          🔭 TEL
+                        </span>
+                      )}
+                      {!showBinoBadge && !showTelBadge && isDim && (
                         <span
                           className="text-[8px] text-[#ffaa00] border border-[#ffaa00]/25 px-1 rounded flex items-center font-bold tracking-tight bg-[#ffaa00]/5 scale-90"
                           style={{ fontFamily: "var(--font-mono)" }}

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import LocationSearch from "@/components/LocationSearch";
 import OnboardingTutorial from "@/components/ui/OnboardingTutorial";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Dynamic import — CesiumJS cannot run during SSR
 const GlobeView = dynamic(() => import("@/components/GlobeView"), {
@@ -129,6 +130,25 @@ export default function LandingPage() {
         isLoaded={isGlobeFullyLoaded}
         onNavigateToSky={handleNextFromGlobe}
       />
+
+      <AnimatePresence>
+        {!isGlobeFullyLoaded && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="fixed inset-0 z-[150] flex flex-col items-center justify-center gap-4 bg-[#02030a]"
+          >
+            <div
+              className="w-12 h-12 rounded-full animate-spin"
+              style={{ border: "3px solid rgba(0, 212, 255, 0.15)", borderTopColor: "#00d4ff" }}
+            />
+            <p className="text-sm font-semibold tracking-widest text-[#00d4ff]/80 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+              Initialising Earth Orbit Telemetry…
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

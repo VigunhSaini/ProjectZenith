@@ -126,8 +126,8 @@ export default function SkyCanvas({ objects }: SkyCanvasProps) {
           enablePan={false}
           minDistance={1}
           maxDistance={50}
-          minPolarAngle={0}                // Look straight up (Zenith)
-          maxPolarAngle={Math.PI / 2 - 0.02} // Look down to just above horizon
+          minPolarAngle={0.02}               // Avoid gimbal lock at poles
+          maxPolarAngle={Math.PI - 0.02}     // Allow looking up at sky objects from lower hemisphere
           target={[0, 0, 0]}               // Look-around pivot center
         />
       </Canvas>

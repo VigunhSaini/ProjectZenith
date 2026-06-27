@@ -22,7 +22,7 @@ const STAR_SPHERE_RADIUS = 400; // Radius of the celestial dome
 export default function StarField() {
   const { location, currentTime } = useZenithStore();
   const [stars, setStars] = useState<StarData[]>([]);
-  
+
   const tiltedGroupRef = useRef<THREE.Group>(null);
   const rotatingGroupRef = useRef<THREE.Group>(null);
   const geometryRef = useRef<THREE.BufferGeometry>(null);

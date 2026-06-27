@@ -60,6 +60,7 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
   const sphereRef = useRef<THREE.Mesh>(null);
 
   const isDim = planet.magnitude !== undefined && planet.magnitude > 6.5;
+  const requiresAid = planet.magnitude !== undefined && planet.magnitude > 6.0;
 
   // Dynamic scale factor for hover and selection (dimmer planets are scaled down slightly)
   const baseScale = getBasePlanetScale(planet.name);
@@ -84,30 +85,11 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
     }
   });
 
-  // Generate planet-specific material/shaders with useMemo to prevent GPU memory leaks
-  const material = useMemo(() => {
-    return getPlanetMaterial(planet.name, planet.color);
-  }, [planet.name, planet.color]);
-
-  // Handle transparency/opacity dynamically for dim planets
-  useEffect(() => {
-    material.transparent = isDim;
-    material.opacity = isDim ? 0.35 : 1.0;
-  }, [material, isDim]);
-
-  // Clean up WebGL resources
-  useEffect(() => {
-    return () => {
-      material.dispose();
-    };
-  }, [material]);
-
   return (
     <group ref={groupRef} position={position} scale={[scale, scale, scale]}>
       {/* 1. Interactive Sphere */}
       <mesh
         ref={sphereRef}
-        material={material}
         onClick={(e) => {
           e.stopPropagation();
           onClick();
@@ -124,6 +106,49 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
         }}
       >
         <sphereGeometry args={[1, 32, 32]} />
+        {planet.name === "Jupiter" ? (
+          <shaderMaterial
+            uniforms={{
+              color1: { value: new THREE.Color("#C88B3A") },
+              color2: { value: new THREE.Color("#8B4513") },
+              color3: { value: new THREE.Color("#FFF8DC") },
+            }}
+            vertexShader={`
+              varying vec2 vUv;
+              void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+              }
+            `}
+            fragmentShader={`
+              varying vec2 vUv;
+              uniform vec3 color1;
+              uniform vec3 color2;
+              uniform vec3 color3;
+              void main() {
+                // Create horizontal stripes based on UV.y
+                float y = vUv.y * 12.0;
+                float stripe = sin(y) * cos(y * 0.5) * 0.5 + 0.5;
+                
+                vec3 finalColor;
+                if (stripe < 0.3) {
+                  finalColor = mix(color1, color2, stripe / 0.3);
+                } else {
+                  finalColor = mix(color2, color3, (stripe - 0.3) / 0.7);
+                }
+                
+                gl_FragColor = vec4(finalColor, 1.0);
+              }
+            `}
+          />
+        ) : (
+          <meshBasicMaterial
+            color={planet.name === "Venus" ? "#FFE7BA" : planet.color}
+            transparent={requiresAid || isDim}
+            opacity={requiresAid ? 0.3 : isDim ? 0.35 : 1.0}
+            toneMapped={planet.name === "Venus" ? false : undefined}
+          />
+        )}
       </mesh>
 
       {/* 2. Saturn's Ring */}
@@ -134,7 +159,7 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
             color="#E4D191"
             side={THREE.DoubleSide}
             transparent
-            opacity={0.85}
+            opacity={requiresAid ? 0.3 : 0.85}
           />
         </mesh>
       )}
@@ -155,7 +180,7 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
       )}
 
       {/* 4. Glowing Atmosphere / Halo (for Venus, Jupiter, Mars) */}
-      {(isHovered || isSelected) && (
+      {(isHovered || isSelected) && !requiresAid && (
         <mesh>
           <sphereGeometry args={[1.15, 16, 16]} />
           <meshBasicMaterial
@@ -167,65 +192,25 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
           />
         </mesh>
       )}
+
+      {/* 5. Dashed Circle (Visual indicator for optical aid required) */}
+      {requiresAid && (
+        <mesh>
+          <ringGeometry args={[1.4, 1.5, 8]} />
+          <meshBasicMaterial
+            color={planet.color}
+            side={THREE.DoubleSide}
+            transparent
+            opacity={0.3}
+            wireframe // Renders dashed-like octagon
+          />
+        </mesh>
+      )}
     </group>
   );
 }
 
-/**
- * Returns a custom Three.js Material for a planet to match its celestial characteristics.
- */
-function getPlanetMaterial(name: string, colorHex: string) {
-  if (name === "Jupiter") {
-    // Custom shader material for Jupiter's gas bands
-    return new THREE.ShaderMaterial({
-      uniforms: {
-        color1: { value: new THREE.Color("#C88B3A") }, // beige
-        color2: { value: new THREE.Color("#8B4513") }, // brown
-        color3: { value: new THREE.Color("#FFF8DC") }, // light white
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec2 vUv;
-        uniform vec3 color1;
-        uniform vec3 color2;
-        uniform vec3 color3;
-        void main() {
-          // Create horizontal stripes based on UV.y
-          float y = vUv.y * 12.0;
-          float stripe = sin(y) * cos(y * 0.5) * 0.5 + 0.5;
-          
-          vec3 finalColor;
-          if (stripe < 0.3) {
-            finalColor = mix(color1, color2, stripe / 0.3);
-          } else {
-            finalColor = mix(color2, color3, (stripe - 0.3) / 0.7);
-          }
-          
-          gl_FragColor = vec4(finalColor, 1.0);
-        }
-      `,
-    });
-  }
 
-  // Venus: Intense glowing white-yellow cloud deck
-  if (name === "Venus") {
-    return new THREE.MeshBasicMaterial({
-      color: "#FFE7BA",
-      toneMapped: false,
-    });
-  }
-
-  // Standard planets: glowing basic mesh material to maintain look in dome
-  return new THREE.MeshBasicMaterial({
-    color: new THREE.Color(colorHex),
-  });
-}
 
 /**
  * Returns baseline visual sizing scales for planets so they have relative sizing

@@ -17,11 +17,11 @@ interface PlanetDef {
 
 const PLANETS: PlanetDef[] = [
   { name: "Mercury", id: "planet-mercury", body: Astronomy.Body.Mercury, color: "#B5A290" },
-  { name: "Venus",   id: "planet-venus",   body: Astronomy.Body.Venus,   color: "#E8CFAA" },
-  { name: "Mars",    id: "planet-mars",    body: Astronomy.Body.Mars,    color: "#C1440E" },
+  { name: "Venus", id: "planet-venus", body: Astronomy.Body.Venus, color: "#E8CFAA" },
+  { name: "Mars", id: "planet-mars", body: Astronomy.Body.Mars, color: "#C1440E" },
   { name: "Jupiter", id: "planet-jupiter", body: Astronomy.Body.Jupiter, color: "#C88B3A" },
-  { name: "Saturn",  id: "planet-saturn",  body: Astronomy.Body.Saturn,  color: "#E4D191" },
-  { name: "Uranus",  id: "planet-uranus",  body: Astronomy.Body.Uranus,  color: "#7FFFD4" },
+  { name: "Saturn", id: "planet-saturn", body: Astronomy.Body.Saturn, color: "#E4D191" },
+  { name: "Uranus", id: "planet-uranus", body: Astronomy.Body.Uranus, color: "#7FFFD4" },
   { name: "Neptune", id: "planet-neptune", body: Astronomy.Body.Neptune, color: "#4B70DD" },
 ];
 
@@ -36,11 +36,11 @@ function getPlanetMagnitude(body: Astronomy.Body, astroTime: Astronomy.AstroTime
     // Fallback magnitudes (approximate)
     const fallback: Partial<Record<Astronomy.Body, number>> = {
       [Astronomy.Body.Mercury]: 0.0,
-      [Astronomy.Body.Venus]:   -4.4,
-      [Astronomy.Body.Mars]:    0.5,
+      [Astronomy.Body.Venus]: -4.4,
+      [Astronomy.Body.Mars]: 0.5,
       [Astronomy.Body.Jupiter]: -2.0,
-      [Astronomy.Body.Saturn]:  0.7,
-      [Astronomy.Body.Uranus]:  5.7,
+      [Astronomy.Body.Saturn]: 0.7,
+      [Astronomy.Body.Uranus]: 5.7,
       [Astronomy.Body.Neptune]: 7.9,
     };
     return fallback[body] ?? 4.0;
@@ -70,7 +70,7 @@ export function usePlanets(
       for (const planet of PLANETS) {
         // Equatorial coordinates (apparent RA/Dec, J2000)
         const equatorial = Astronomy.Equator(planet.body, astroTime, observer, true, true);
-        const ra  = equatorial.ra;   // decimal hours
+        const ra = equatorial.ra;   // decimal hours
         const dec = equatorial.dec;  // decimal degrees
 
         // Horizontal coordinates

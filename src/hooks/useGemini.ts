@@ -9,6 +9,27 @@ import { formatDist } from "@/lib/coordinates";
 // Client-side cache keyed by: `${objectId}-${mode}`
 const apiCache = new Map<string, string>();
 
+// Client-side rate limiting tracking (sliding window: 15 requests per minute)
+const clientRequestTimes: number[] = [];
+const CLIENT_LIMIT_WINDOW = 60 * 1000;
+const CLIENT_MAX_REQUESTS = 10;
+
+function isClientRateLimited(): boolean {
+  const now = Date.now();
+  // Filter out request timestamps older than 1 minute
+  const activeTimes = clientRequestTimes.filter((t) => now - t < CLIENT_LIMIT_WINDOW);
+  
+  clientRequestTimes.length = 0;
+  clientRequestTimes.push(...activeTimes);
+
+  if (clientRequestTimes.length >= CLIENT_MAX_REQUESTS) {
+    return true;
+  }
+
+  clientRequestTimes.push(now);
+  return false;
+}
+
 function getLightTravelTime(distanceKm: number): string {
   const c = 299792.458; // speed of light in km/s
   const seconds = distanceKm / c;
@@ -56,6 +77,29 @@ export function useGemini(
       setLoading(true);
       setError(null);
       activeRequestRef.current = cacheKey;
+
+      if (isClientRateLimited()) {
+        console.warn("Client-side rate limit hit (15 req/min) for Gemini API. Falling back to Wikipedia.");
+        try {
+          const wikiText = await fetchWikipediaSummary(object.name, object.category);
+          if (activeRequestRef.current !== cacheKey) return;
+          if (wikiText) {
+            const sanitizedWiki = wikiText.trim();
+            apiCache.set(cacheKey, sanitizedWiki);
+            setDescription(sanitizedWiki);
+          } else {
+            setError("Rate limit reached. Wikipedia fallback unavailable.");
+          }
+        } catch {
+          if (activeRequestRef.current !== cacheKey) return;
+          setError("Rate limit reached. Wikipedia fallback failed.");
+        } finally {
+          if (activeRequestRef.current === cacheKey) {
+            setLoading(false);
+          }
+        }
+        return;
+      }
 
       const formattedDistance = formatDist(object.distanceKm);
       const lightTime = getLightTravelTime(object.distanceKm);

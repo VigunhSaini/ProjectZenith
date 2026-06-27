@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { CelestialObject } from "@/lib/celestial";
 import { slantRange } from "@/lib/coordinates";
-import { tleToAltAz, tleToGeodetic } from "@/lib/satellite";
+import { tleToAltAz, tleToGeodetic, calculateSatelliteMagnitude, parseTleToSatrec, AltAzResult } from "@/lib/satellite";
+import * as satellite from "satellite.js";
 
 
 const ISS_URL = "https://api.wheretheiss.at/v1/satellites/25544";
@@ -74,7 +75,7 @@ export function useISS(
 
     const updateISS = async () => {
       let lat: number, lon: number, altKm: number;
-      let altAz: { az: number; alt: number; rangeSat: number };
+      let altAz: AltAzResult;
 
       if (isLive) {
         const livePos = await fetchLiveISS();
@@ -136,6 +137,22 @@ export function useISS(
         altAz = tleToAltAz(tle.line1, tle.line2, observerLat, observerLon, observerAltM, time);
       }
 
+      const tle = getISSTLE() || FALLBACK_ISS_TLE;
+      const satrec = parseTleToSatrec(tle.line1, tle.line2);
+      let issRa = altAz.ra || 0;
+      let issDec = altAz.dec || 0;
+      if (satrec) {
+        const posVel = satellite.propagate(satrec, time);
+        if (posVel && posVel.position && typeof posVel.position !== "boolean") {
+          const pos = posVel.position as satellite.EciVec3<number>;
+          const d = Math.sqrt(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
+          issDec = Math.asin(pos.z / d) * (180 / Math.PI);
+          let raRad = Math.atan2(pos.y, pos.x);
+          if (raRad < 0) raRad += 2 * Math.PI;
+          issRa = raRad * (12 / Math.PI);
+        }
+      }
+
       setIssPosition({ lat, lon, altKm });
 
       if (altAz.alt >= 10) {
@@ -145,10 +162,10 @@ export function useISS(
           category: "iss",
           az: altAz.az,
           alt: altAz.alt,
-          ra: 0,
-          dec: 0,
+          ra: issRa,
+          dec: issDec,
           distanceKm: altAz.rangeSat,
-          magnitude: -3.0,
+          magnitude: calculateSatelliteMagnitude(altAz.rangeSat, "ISS"),
           color: "#FF8C00",
           // nextTransit intentionally null: ISS is a fast-moving LEO object —
           // the fixed-star LST bisection in nextTransit() is not meaningful for it.

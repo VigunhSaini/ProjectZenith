@@ -14,9 +14,11 @@ export interface AltAzResult {
   az: number; // degrees [0, 360)
   alt: number; // degrees [-90, 90]
   rangeSat: number; // km slant range
+  ra?: number;
+  dec?: number;
 }
 
-const FAILURE: AltAzResult = { az: 0, alt: -1, rangeSat: 0 };
+const FAILURE: AltAzResult = { az: 0, alt: -1, rangeSat: 0, ra: 0, dec: 0 };
 const RAD_TO_DEG = 180 / Math.PI;
 
 /**
@@ -75,10 +77,19 @@ export function tleToAltAz(
       satellite.eciToEcf(posVel.position as satellite.EciVec3<number>, gmst)
     );
 
+    const pos = posVel.position as satellite.EciVec3<number>;
+    const d = Math.sqrt(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
+    const dec = Math.asin(pos.z / d) * (180 / Math.PI);
+    let raRad = Math.atan2(pos.y, pos.x);
+    if (raRad < 0) raRad += 2 * Math.PI;
+    const ra = raRad * (12 / Math.PI);
+
     return {
       az: ((lookAngles.azimuth * RAD_TO_DEG) + 360) % 360,
       alt: lookAngles.elevation * RAD_TO_DEG,
       rangeSat: lookAngles.rangeSat,
+      ra,
+      dec,
     };
   } catch {
     return FAILURE;
@@ -162,6 +173,8 @@ export interface PropagatedSatResult {
   az: number;
   rangeSat: number;
   geo: GeodeticPosition | null;
+  ra: number;
+  dec: number;
 }
 
 /**
@@ -205,14 +218,65 @@ export function propagateSatrec(
       };
     }
 
+    const pos = posVel.position as satellite.EciVec3<number>;
+    const d = Math.sqrt(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
+    const dec = Math.asin(pos.z / d) * (180 / Math.PI);
+    let raRad = Math.atan2(pos.y, pos.x);
+    if (raRad < 0) raRad += 2 * Math.PI;
+    const ra = raRad * (12 / Math.PI);
+
     return {
       alt,
       az,
       rangeSat: lookAngles.rangeSat,
       geo,
+      ra,
+      dec,
     };
   } catch {
     return null;
   }
+}
+
+/**
+ * Compute the approximate visual magnitude of a satellite.
+ * Standard LEO satellites are typically magnitude 5.0 to 6.5.
+ * Brighter ones (like ISS) are around -1.3 standard magnitude.
+ * Larger or older payloads might range between 3.5 and 5.5.
+ * Small cubesats or debris are around 7.0 to 9.0.
+ *
+ * We estimate the standard magnitude based on NORAD ID or name,
+ * and adjust for distance (slant range).
+ */
+export function calculateSatelliteMagnitude(rangeKm: number, noradIdOrName: string): number {
+  let stdMag = 6.0;
+
+  const idOrNameUpper = noradIdOrName.toUpperCase();
+  if (idOrNameUpper.includes("ISS") || idOrNameUpper.includes("25544")) {
+    stdMag = -1.3;
+  } else if (idOrNameUpper.includes("STARLINK")) {
+    // Starlink satellites are moderately bright
+    stdMag = 5.2;
+  } else if (idOrNameUpper.includes("HST") || idOrNameUpper.includes("HUBBLE") || idOrNameUpper.includes("20580")) {
+    stdMag = 1.5;
+  } else if (idOrNameUpper.includes("TIANGONG") || idOrNameUpper.includes("CSS") || idOrNameUpper.includes("49258")) {
+    stdMag = 1.5;
+  } else if (idOrNameUpper.includes("SKYNET")) {
+    // Skynet geosync/comms are standard mag ~6.0
+    stdMag = 6.2;
+  } else {
+    // Deterministic standard magnitude based on NORAD ID hash (between 5.5 and 7.5)
+    const numMatch = noradIdOrName.match(/\d+/);
+    const idNum = numMatch ? parseInt(numMatch[0], 10) : 0;
+    stdMag = 5.5 + ((idNum % 20) / 20) * 2.0; // 5.5 to 7.5
+  }
+
+  // Slant range visual magnitude formula:
+  // V = Vstd + 5 * log10(range / 1000)
+  const safeRange = Math.max(10, rangeKm);
+  const mag = stdMag + 5 * Math.log10(safeRange / 1000);
+
+  // Clamp visual magnitude to a realistic range (-6 to 10)
+  return Math.round(Math.max(-6, Math.min(10, mag)) * 100) / 100;
 }
 

@@ -111,18 +111,26 @@ export default function TelemetryPanel() {
             </div>
             <div className="p-2 rounded bg-white/5 border border-white/5">
               <span className="text-white/30 block mb-0.5">MAGNITUDE</span>
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap mb-1">
                 <span className="text-white text-xs">{selectedObject.magnitude.toFixed(2)}</span>
-                {selectedObject.magnitude > 6.5 && (
+                {((selectedObject.category === "planet" && selectedObject.magnitude > 6.0) || selectedObject.magnitude > 6.5) && (
                   <span
                     className="text-[8px] text-[#ffaa00] border border-[#ffaa00]/25 px-1 py-0.5 rounded font-bold tracking-tight bg-[#ffaa00]/5"
                     style={{ fontFamily: "var(--font-mono)" }}
-                    title="Optical aid required to observe (visual magnitude > 6.5)"
+                    title={selectedObject.category === "planet" ? "Optical aid required to observe (visual magnitude > 6.0)" : "Optical aid required to observe (visual magnitude > 6.5)"}
                   >
                     🔭 OPTICAL AID
                   </span>
                 )}
               </div>
+              {selectedObject.magnitude > 6.0 && (
+                <div
+                  className="text-[10px] text-[#ffaa00]/80 font-medium leading-tight mt-1"
+                  style={{ fontFamily: "var(--font-inter)" }}
+                >
+                  Not visible to the naked eye from this location
+                </div>
+              )}
             </div>
           </div>
 

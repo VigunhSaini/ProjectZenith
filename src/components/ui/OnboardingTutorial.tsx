@@ -130,8 +130,11 @@ export default function OnboardingTutorial({
     if (typeof window === "undefined") return;
     const isCompleted = localStorage.getItem("zenith-tutorial-v1");
     if (!isCompleted && isLoaded && !tutorialActive) {
-      // Auto-launch the tutorial for whichever screen the user landed on first
-      startTutorial(currentScreen);
+      // Add a 1.2-second delay to let the page settle before starting the tutorial
+      const timer = setTimeout(() => {
+        startTutorial(currentScreen);
+      }, 1200);
+      return () => clearTimeout(timer);
     }
   }, [isLoaded, tutorialActive, currentScreen, startTutorial]);
 
@@ -177,8 +180,8 @@ export default function OnboardingTutorial({
 
     const selector = activeStep.targetSelector;
     if (selector === "#cesium-globe-container" || selector === "#sky-canvas-container") {
-      // Spotlight a centered circular region in the middle of the viewport
-      const diameter = Math.min(380, window.innerWidth - 40, window.innerHeight - 40);
+      // Spotlight a centered circular region in the middle of the viewport covering the Earth/Sky dome
+      const diameter = Math.min(750, window.innerWidth - 20, window.innerHeight - 20);
       const x = window.innerWidth / 2 - diameter / 2;
       const y = window.innerHeight / 2 - diameter / 2;
       setRect({
@@ -375,20 +378,29 @@ export default function OnboardingTutorial({
         {isCurrentlyShowing && (
           <div className="fixed inset-0 z-[100] pointer-events-none select-none">
             {/* SVG mask cutout overlay */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-auto">
+            <motion.svg
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full pointer-events-auto"
+            >
               <defs>
                 <mask id="onboarding-cutout-mask">
                   {/* White background preserves darkness */}
                   <rect width="100%" height="100%" fill="white" />
                   {/* Black cutout makes target visible */}
                   {rect && (
-                    <rect
-                      x={maskX}
-                      y={maskY}
-                      width={maskW}
-                      height={maskH}
-                      rx={maskR}
-                      ry={maskR}
+                    <motion.rect
+                      animate={{
+                        x: maskX,
+                        y: maskY,
+                        width: maskW,
+                        height: maskH,
+                        rx: maskR,
+                        ry: maskR,
+                      }}
+                      transition={{ type: "spring", stiffness: 120, damping: 20 }}
                       fill="black"
                     />
                   )}
@@ -403,7 +415,7 @@ export default function OnboardingTutorial({
                 onClick={() => skipTutorial()}
                 className="cursor-pointer"
               />
-            </svg>
+            </motion.svg>
 
             {/* Tooltip callout bubble */}
             <motion.div
@@ -411,7 +423,12 @@ export default function OnboardingTutorial({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1, x: tooltipCoords.x, y: tooltipCoords.y }}
               exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              transition={{
+                opacity: { duration: 0.8, delay: 0.5, ease: "easeOut" },
+                scale: { duration: 0.8, delay: 0.5, ease: "easeOut" },
+                x: { type: "spring", stiffness: 150, damping: 22 },
+                y: { type: "spring", stiffness: 150, damping: 22 },
+              }}
               className="absolute w-80 p-5 rounded-xl border pointer-events-auto flex flex-col gap-3"
               style={{
                 backgroundColor: "rgba(6, 13, 31, 0.95)",

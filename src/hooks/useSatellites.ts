@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { CelestialObject } from "@/lib/celestial";
-import { parseTleToSatrec, propagateSatrec } from "@/lib/satellite";
+import { parseTleToSatrec, propagateSatrec, calculateSatelliteMagnitude } from "@/lib/satellite";
 import type * as satellite from "satellite.js";
 
 const CELESTRAK_URL = "/api/celestrak";
@@ -205,16 +205,17 @@ export function useSatellites(
       if (!result) continue;
       if (result.alt < 10) continue; // 10 degrees filter
 
+      const noradId = item.line1.slice(2, 7).trim();
       objects.push({
-        id: `sat-${item.line1.slice(2, 7).trim()}`,
+        id: `sat-${noradId}`,
         name: item.name,
         category: "satellite",
         az: result.az,
         alt: result.alt,
-        ra: 0,
-        dec: 0,
+        ra: result.ra,
+        dec: result.dec,
         distanceKm: result.rangeSat,
-        magnitude: 3.0,
+        magnitude: calculateSatelliteMagnitude(result.rangeSat, item.name + "_" + noradId),
         color: "#00BFFF",
         nextTransit: null, // computed lazily on selection to prevent major CPU/SGP4 bisection lag
         lat: result.geo?.lat,

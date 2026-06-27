@@ -27,6 +27,7 @@ export default function GlobeView({
   useEffect(() => {
     let mounted = true;
     let unsubscribeTileListener: (() => void) | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
     const initCesium = async () => {
       if (!containerRef.current || viewerRef.current) return;
@@ -131,13 +132,29 @@ export default function GlobeView({
 
       // Listen for tile load progress
       let initialLoadTriggered = false;
-      const unsubscribe = viewer.scene.globe.tileLoadProgressEvent.addEventListener((queueLength: number) => {
-        if (queueLength === 0 && !initialLoadTriggered) {
+      let hasStartedLoading = false;
+
+      const triggerLoaded = () => {
+        if (!initialLoadTriggered) {
           initialLoadTriggered = true;
           onGlobeFullyLoaded?.();
         }
+      };
+
+      const unsubscribe = viewer.scene.globe.tileLoadProgressEvent.addEventListener((queueLength: number) => {
+        if (queueLength > 0) {
+          hasStartedLoading = true;
+        }
+        if (hasStartedLoading && queueLength === 0) {
+          triggerLoaded();
+        }
       });
       unsubscribeTileListener = unsubscribe;
+
+      // Fallback timeout to ensure tutorial is shown even if progress queue triggers are missed
+      fallbackTimer = setTimeout(() => {
+        triggerLoaded();
+      }, 2500);
 
       // Notify parent that the viewer is ready
       onGlobeReady?.(viewer);
@@ -147,6 +164,9 @@ export default function GlobeView({
 
     return () => {
       mounted = false;
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
       if (unsubscribeTileListener) {
         unsubscribeTileListener();
       }

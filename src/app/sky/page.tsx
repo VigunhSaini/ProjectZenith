@@ -12,6 +12,7 @@ import TelemetryPanel from "@/components/ui/TelemetryPanel";
 import SkyprintModal from "@/components/ui/SkyprintModal";
 import dynamic from "next/dynamic";
 import OnboardingTutorial from "@/components/ui/OnboardingTutorial";
+import { motion, AnimatePresence } from "framer-motion";
 
 const SkyCanvas = dynamic(() => import("@/components/SkyCanvas"), {
   ssr: false,
@@ -59,18 +60,25 @@ function SkyContent() {
       {/* ─── Overlay UI Shell ─── */}
       <Topbar totalObjects={objects.length} />
 
-      {/* Loading spinner — fixed border-top color */}
-      {loading && objects.length === 0 && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-10">
-          <div
-            className="w-10 h-10 rounded-full animate-spin"
-            style={{ border: "2px solid rgba(0,229,176,0.15)", borderTopColor: "#00e5b0" }}
-          />
-          <p className="text-xs text-white/50 font-bold uppercase tracking-wider" style={{ fontFamily: "var(--font-mono)" }}>
-            Syncing orbital telemetry…
-          </p>
-        </div>
-      )}
+      {/* Full-screen Loading Overlay */}
+      <AnimatePresence>
+        {loading && objects.length === 0 && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="fixed inset-0 z-[150] flex flex-col items-center justify-center gap-4 bg-[#010208]"
+          >
+            <div
+              className="w-12 h-12 rounded-full animate-spin"
+              style={{ border: "3px solid rgba(0, 229, 176, 0.15)", borderTopColor: "#00e5b0" }}
+            />
+            <p className="text-sm font-semibold tracking-widest text-[#00e5b0]/80 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+              Syncing local sky alignments…
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Error banner */}
       {error && (
