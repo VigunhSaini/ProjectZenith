@@ -34,6 +34,7 @@ export default function LandingPage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [cesiumViewer, setCesiumViewer] = useState<unknown>(null);
   const [isGlobeFullyLoaded, setIsGlobeFullyLoaded] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleGlobeReady = useCallback((viewer: unknown) => {
     setCesiumViewer(viewer);
@@ -70,7 +71,14 @@ export default function LandingPage() {
     if (selectedLocation) {
       handleLocationSelect(selectedLocation.lat, selectedLocation.lon, selectedLocation.name);
     } else {
-      handleLocationSelect(51.5074, -0.1278, "London");
+      // Trigger the locate button programmatically to use their actual GPS location
+      const locateBtn = document.getElementById("locate-me-btn") as HTMLButtonElement | null;
+      if (locateBtn) {
+        locateBtn.click();
+      } else {
+        // Fallback if locateBtn is somehow not mounted
+        handleLocationSelect(51.5074, -0.1278, "London");
+      }
     }
   }, [selectedLocation, handleLocationSelect]);
 
@@ -120,7 +128,29 @@ export default function LandingPage() {
 
       {/* Location search — bottom-center */}
       {!isTransitioning && (
-        <div className="search-overlay" id="search-overlay">
+        <div className={`search-overlay ${drawerOpen ? "drawer-open" : "drawer-closed"}`} id="search-overlay">
+          {/* Drag handle header for mobile */}
+          <div
+            className="mobile-drawer-header md:hidden select-none flex items-center justify-between w-full px-4 pt-2.5 pb-2"
+            onClick={() => setDrawerOpen(!drawerOpen)}
+          >
+            <div className="w-10" />
+            <div className="flex-1 flex flex-col items-center">
+              <div className="drawer-handle-bar" />
+              <span className="drawer-title-pill">🔍 Find Location</span>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                document.getElementById("locate-me-btn")?.click();
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-[#00d4ff]/25 bg-[#00d4ff]/10 text-[#00d4ff] text-base hover:bg-[#00d4ff]/20 transition-colors"
+              title="Use my current location"
+              id="locate-me-btn-mobile"
+            >
+              📡
+            </button>
+          </div>
           <LocationSearch onLocationSelect={handleLocationSelect} />
         </div>
       )}

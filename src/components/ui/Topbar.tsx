@@ -61,7 +61,7 @@ export default function Topbar({ totalObjects }: TopbarProps) {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-50 transition-all duration-300 select-none border-b"
+      className="fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-2 sm:px-6 z-50 transition-all duration-300 select-none border-b"
       style={{
         background: isScientific ? "rgba(6, 13, 31, 0.92)" : "rgba(3, 5, 15, 0.5)",
         backdropFilter: "blur(20px)",
@@ -70,10 +70,10 @@ export default function Topbar({ totalObjects }: TopbarProps) {
       id="zenith-topbar"
     >
       {/* Left: Navigation and Location Info */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-1.5 sm:gap-5">
         <Link
           href="/"
-          className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 border"
+          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 border"
           style={{
             fontFamily: "var(--font-inter)",
             color: isScientific ? "#00e5b0" : "#4078ff",
@@ -82,21 +82,22 @@ export default function Topbar({ totalObjects }: TopbarProps) {
           }}
           id="back-to-globe"
         >
-          <span className="text-sm">←</span> Globe
+          <span className="hidden sm:inline">← Globe</span>
+          <span className="sm:hidden">←</span>
         </Link>
 
         <div className="h-6 w-[1px] bg-white/10" />
 
         <div className="flex flex-col">
           <span
-            className="text-sm font-semibold tracking-wide text-white"
+            className="text-xs sm:text-sm font-semibold tracking-wide text-white truncate max-w-[80px] xs:max-w-[120px] sm:max-w-none"
             style={{ fontFamily: "var(--font-inter)" }}
           >
             📍 {location?.name || "Unknown Location"}
           </span>
           {location && (
             <span
-              className="text-[10px] uppercase tracking-wider opacity-60"
+              className="text-[10px] uppercase tracking-wider opacity-60 hidden sm:block"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               LAT: {location.lat.toFixed(4)}° / LON: {location.lon.toFixed(4)}°
@@ -108,28 +109,30 @@ export default function Topbar({ totalObjects }: TopbarProps) {
       {/* Center: Mission Control Telemetry (Scientific Mode only) */}
       {isScientific && (
         <div
-          className="hidden md:flex items-center gap-6 px-5 py-1.5 rounded-full bg-black/40 border border-white/5"
+          className="flex items-center gap-1.5 sm:gap-6 px-1.5 sm:px-5 py-1 sm:py-1.5 rounded-full bg-black/40 border border-white/5"
           style={{ fontFamily: "var(--font-mono)" }}
           id="scientific-telemetry-header"
         >
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00e5b0] animate-pulse" />
-            <span className="text-[11px] text-white/50">RADAR:</span>
-            <span className="text-[11px] font-bold text-[#00e5b0]">{totalObjects} SKY OBJECTS</span>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#00e5b0] animate-pulse" />
+            <span className="text-[8px] sm:text-[11px] text-white/50">RADAR:</span>
+            <span className="text-[8px] sm:text-[11px] font-bold text-[#00e5b0]">
+              {totalObjects}<span className="hidden sm:inline"> SKY OBJECTS</span><span className="sm:hidden">OBJ</span>
+            </span>
           </div>
           <div className="w-[1px] h-3 bg-white/15" />
-          <div className="text-[11px] text-white/50">
+          <div className="text-[8px] sm:text-[11px] text-white/50">
             LST: <span className="text-white font-bold" suppressHydrationWarning>{lstTime}</span>
           </div>
-          <div className="w-[1px] h-3 bg-white/15" />
-          <div className="text-[11px] text-white/50">
+          <div className="hidden sm:block w-[1px] h-3 bg-white/15" />
+          <div className="hidden sm:block text-[11px] text-white/50">
             J2000: <span className="text-white font-bold" suppressHydrationWarning>{(2440587.5 + toUTCDate(activeTime).getTime() / 86400000).toFixed(4)}</span>
           </div>
         </div>
       )}
 
       {/* Right: Toggle Switch and Download */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-1.5 sm:gap-6">
         {/* Time and Date display */}
         <div className="hidden sm:flex flex-col text-right" style={{ fontFamily: "var(--font-mono)" }}>
           <span className="text-sm font-semibold text-white tracking-wide" suppressHydrationWarning>{formattedTime}</span>
@@ -140,7 +143,7 @@ export default function Topbar({ totalObjects }: TopbarProps) {
 
         <button
           onClick={() => setShowSkyprint(true)}
-          className="px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200"
+          className="px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 animate-pulse-once"
           style={{
             fontFamily: "var(--font-inter)",
             background: isScientific
@@ -153,7 +156,8 @@ export default function Topbar({ totalObjects }: TopbarProps) {
           }}
           id="skyprint-trigger-btn"
         >
-          📷 Save Sky
+          <span className="hidden sm:inline">📷 Save Sky</span>
+          <span className="sm:hidden">📷</span>
         </button>
       </div>
     </header>

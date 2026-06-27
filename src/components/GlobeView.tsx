@@ -28,15 +28,25 @@ export default function GlobeView({
     let mounted = true;
     let unsubscribeTileListener: (() => void) | null = null;
     let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    let checkInterval: ReturnType<typeof setInterval> | null = null;
 
     const initCesium = async () => {
       if (!containerRef.current || viewerRef.current) return;
 
-      const Cesium = window.Cesium;
-      if (!Cesium) {
-        console.error("Cesium failed to load from global script.");
+      if (typeof window === "undefined" || !window.Cesium) {
+        if (!checkInterval) {
+          checkInterval = setInterval(() => {
+            if (typeof window !== "undefined" && window.Cesium) {
+              clearInterval(checkInterval!);
+              checkInterval = null;
+              initCesium();
+            }
+          }, 100);
+        }
         return;
       }
+
+      const Cesium = window.Cesium;
 
       // Explicitly fallback the base URL on the window object for production environments
       if (typeof window !== "undefined") {
@@ -164,6 +174,9 @@ export default function GlobeView({
 
     return () => {
       mounted = false;
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
       if (fallbackTimer) {
         clearTimeout(fallbackTimer);
       }

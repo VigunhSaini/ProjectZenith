@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useZenithStore } from "@/store/zenith";
 import { useGemini } from "@/hooks/useGemini";
 import { formatDist, formatRA, formatDec } from "@/lib/coordinates";
@@ -8,6 +9,16 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function TelemetryPanel() {
   const { selectedObject, setSelectedObject, location, mode } = useZenithStore();
   const isScientific = mode === "scientific";
+
+  // Watch screen size dynamically for appropriate slide animations
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Fetch AI description
   const { description, loading, error } = useGemini(
@@ -30,16 +41,17 @@ export default function TelemetryPanel() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ x: "110%", opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        exit={{ x: "110%", opacity: 0 }}
+        initial={isMobile ? { y: "110%", opacity: 0 } : { x: "110%", opacity: 0 }}
+        animate={{ x: 0, y: 0, opacity: 1 }}
+        exit={isMobile ? { y: "110%", opacity: 0 } : { x: "110%", opacity: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 28 }}
-        className="fixed top-20 right-6 bottom-28 w-80 rounded-xl border flex flex-col pointer-events-auto z-40 select-none overflow-hidden"
+        className="fixed md:top-20 md:right-6 md:bottom-28 md:w-80 md:left-auto bottom-0 left-0 right-0 h-[80vh] md:h-auto rounded-t-2xl md:rounded-xl border flex flex-col pointer-events-auto z-40 select-none overflow-hidden"
         style={{
           background: "rgba(6, 13, 31, 0.92)",
           backdropFilter: "blur(20px)",
           borderColor: "rgba(0, 212, 255, 0.15)",
-          borderLeft: `3px solid ${accentColor}`,
+          borderLeft: isMobile ? "none" : `3px solid ${accentColor}`,
+          borderTop: isMobile ? `3px solid ${accentColor}` : "none",
           boxShadow: "0 0 35px rgba(0, 0, 0, 0.6)",
         }}
         id="scientific-telemetry-panel"
@@ -60,7 +72,7 @@ export default function TelemetryPanel() {
 
           <button
             onClick={() => setSelectedObject(null)}
-            className="w-6 h-6 rounded flex items-center justify-center border border-white/5 hover:border-white/15 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors text-[10px]"
+            className="w-10 h-10 md:w-6 md:h-6 rounded flex items-center justify-center border border-white/5 hover:border-white/15 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors text-sm md:text-[10px]"
             id="close-telemetry-panel"
           >
             ✕

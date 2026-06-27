@@ -113,7 +113,7 @@ export default function LocationSearch({ onLocationSelect }: LocationSearchProps
           <button
             onClick={handleMyLocation}
             disabled={isLocating}
-            className="locate-btn"
+            className="locate-btn hidden md:flex"
             id="locate-me-btn"
             title="Use my current location"
           >

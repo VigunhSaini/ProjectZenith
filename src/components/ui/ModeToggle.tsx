@@ -11,7 +11,7 @@ export default function ModeToggle() {
     <div className="flex items-center gap-3 select-none" id="mode-toggle-switch">
       <span
         onClick={() => setMode("immersive")}
-        className="text-xs font-semibold tracking-widest cursor-pointer transition-colors duration-200"
+        className="hidden sm:inline text-xs font-semibold tracking-widest cursor-pointer transition-colors duration-200"
         style={{
           fontFamily: "var(--font-inter)",
           color: isImmersive ? "#4078ff" : "#4a5a78",
@@ -57,7 +57,7 @@ export default function ModeToggle() {
 
       <span
         onClick={() => setMode("scientific")}
-        className="text-xs font-semibold tracking-widest cursor-pointer transition-colors duration-200"
+        className="hidden sm:inline text-xs font-semibold tracking-widest cursor-pointer transition-colors duration-200"
         style={{
           fontFamily: "var(--font-inter)",
           color: !isImmersive ? "#00e5b0" : "#4a5a78",

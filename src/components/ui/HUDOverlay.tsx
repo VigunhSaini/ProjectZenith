@@ -18,6 +18,7 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
     toggleConstellations,
   } = useZenithStore();
   const [filter, setFilter] = useState<"all" | "planet" | "satellite" | "star">("all");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Group and count objects for HUD stats box
   const stats = useMemo(() => {
@@ -51,7 +52,7 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
     <div className="absolute inset-0 pointer-events-none z-30 select-none" id="scientific-hud-overlay">
       {/* ─── Left Sidebar: Object List & Overlay Controls ─── */}
       <div
-        className="absolute left-6 top-20 bottom-28 w-80 rounded-xl border flex flex-col pointer-events-auto"
+        className={`absolute left-6 top-20 bottom-28 w-80 rounded-xl border flex flex-col pointer-events-auto transition-transform ${drawerOpen ? "drawer-open" : "drawer-closed"}`}
         style={{
           background: "rgba(6, 13, 31, 0.92)",
           backdropFilter: "blur(20px)",
@@ -61,16 +62,35 @@ export default function HUDOverlay({ objects }: HUDOverlayProps) {
         id="hud-sidebar-panel"
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-white/5">
-          <h2
-            className="text-xs font-bold tracking-widest text-[#00e5b0]"
-            style={{ fontFamily: "var(--font-orbitron)" }}
-          >
-            OVERHEAD SYSTEMS
-          </h2>
-          <p className="text-[10px] text-white/40 uppercase mt-0.5" style={{ fontFamily: "var(--font-mono)" }}>
-            RADAR RADIAL ANGLE RADIAN
-          </p>
+        <div
+          className="p-4 border-b border-white/5 cursor-pointer md:cursor-default select-none"
+          onClick={() => {
+            if (window.innerWidth < 768) {
+              setDrawerOpen(!drawerOpen);
+            }
+          }}
+        >
+          {/* Mobile drag handle */}
+          <div className="flex flex-col items-center md:hidden mb-2">
+            <div className="w-8 h-1 rounded-full bg-white/20" />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <h2
+                className="text-xs font-bold tracking-widest text-[#00e5b0]"
+                style={{ fontFamily: "var(--font-orbitron)" }}
+              >
+                OVERHEAD SYSTEMS
+              </h2>
+              <p className="text-[10px] text-white/40 uppercase mt-0.5" style={{ fontFamily: "var(--font-mono)" }}>
+                RADAR RADIAL ANGLE RADIAN
+              </p>
+            </div>
+            {/* Sky Objects pill indicator on mobile */}
+            <span className="md:hidden text-[9px] font-bold text-[#00e5b0] bg-[#00e5b0]/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Sky Objects
+            </span>
+          </div>
         </div>
 
         {/* Filter Toolbar */}

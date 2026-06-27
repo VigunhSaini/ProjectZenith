@@ -178,7 +178,11 @@ export default function OnboardingTutorial({
       return;
     }
 
-    const selector = activeStep.targetSelector;
+    let selector = activeStep.targetSelector;
+    if (selector === "#locate-me-btn" && typeof window !== "undefined" && window.innerWidth < 768) {
+      selector = "#locate-me-btn-mobile";
+    }
+
     if (selector === "#cesium-globe-container") {
       // Spotlight a centered circular region in the middle of the viewport covering the Earth globe
       const diameter = Math.min(750, window.innerWidth - 20, window.innerHeight - 20);
@@ -308,7 +312,8 @@ export default function OnboardingTutorial({
       return { x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 90 };
     }
 
-    const { placement } = activeStep;
+    const isMobile = window.innerWidth < 640;
+    const placement = (isMobile && activeStep.placement !== "center") ? "top" : activeStep.placement;
     const padding = 16;
     const gap = 12;
 
@@ -466,7 +471,7 @@ export default function OnboardingTutorial({
                   {activeStep.title}
                 </h3>
                 <span
-                  className="text-[10px] font-bold text-white/40"
+                  className="text-[8px] sm:text-[10px] font-bold text-white/40"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
                   {tutorialStepIndex + 1} of {totalSteps}

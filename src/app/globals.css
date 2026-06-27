@@ -614,25 +614,51 @@ body {
 
 /* ─── Animations ────────────────────────────────────────────────────────────── */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
 }
 
 /* ─── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .hero-title { font-size: 2.2rem; }
-  .search-overlay { bottom: 20px; }
-  .sky-header { padding: 12px 16px; }
-  .sky-objects-container { grid-template-columns: 1fr; padding: 12px; }
+  .hero-title {
+    font-size: 2.2rem;
+  }
+
+  .search-overlay {
+    bottom: 20px;
+  }
+
+  .sky-header {
+    padding: 12px 16px;
+  }
+
+  .sky-objects-container {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
 }
 
 /* ─── Cesium Overrides ──────────────────────────────────────────────────────── */
@@ -657,47 +683,47 @@ body {
 .bg-stars {
   background-image:
     /* ── Small tile: dense faint stars ── */
-    radial-gradient(1px 1px at 10px  15px, rgba(255,255,255,0.9), transparent),
-    radial-gradient(1px 1px at 35px  60px, rgba(255,255,255,0.7), transparent),
-    radial-gradient(1px 1px at 62px  22px, rgba(255,255,255,0.8), transparent),
-    radial-gradient(1px 1px at 90px  80px, rgba(255,255,255,0.6), transparent),
-    radial-gradient(1px 1px at 120px 10px, rgba(255,255,255,0.85),transparent),
-    radial-gradient(1px 1px at 145px 55px, rgba(255,255,255,0.7), transparent),
-    radial-gradient(1px 1px at 170px 90px, rgba(255,255,255,0.9), transparent),
-    radial-gradient(1px 1px at 185px 130px,rgba(255,255,255,0.6),transparent),
-    radial-gradient(1px 1px at 5px   140px,rgba(255,255,255,0.75),transparent),
-    radial-gradient(1px 1px at 50px  160px,rgba(255,255,255,0.8), transparent),
-    radial-gradient(1px 1px at 100px 175px,rgba(255,255,255,0.65),transparent),
-    radial-gradient(1px 1px at 160px 155px,rgba(255,255,255,0.8), transparent),
-    radial-gradient(1px 1px at 75px  190px,rgba(255,255,255,0.7), transparent),
-    radial-gradient(1px 1px at 130px 195px,rgba(255,255,255,0.9), transparent),
+    radial-gradient(1px 1px at 10px 15px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 35px 60px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 62px 22px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 90px 80px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 120px 10px, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1px 1px at 145px 55px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 170px 90px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 185px 130px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 5px 140px, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1px 1px at 50px 160px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 100px 175px, rgba(255, 255, 255, 0.65), transparent),
+    radial-gradient(1px 1px at 160px 155px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 75px 190px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 130px 195px, rgba(255, 255, 255, 0.9), transparent),
     /* ── Medium tile: slightly brighter stars ── */
-    radial-gradient(1.5px 1.5px at 25px  80px, rgba(255,255,255,0.95),transparent),
-    radial-gradient(1.5px 1.5px at 110px 30px, rgba(200,230,255,0.9), transparent),
-    radial-gradient(1.5px 1.5px at 200px 70px, rgba(255,255,255,0.85),transparent),
-    radial-gradient(1.5px 1.5px at 320px 20px, rgba(255,240,200,0.9), transparent),
-    radial-gradient(1.5px 1.5px at 280px 120px,rgba(255,255,255,0.85),transparent),
-    radial-gradient(1.5px 1.5px at 60px  250px,rgba(200,220,255,0.9), transparent),
-    radial-gradient(1.5px 1.5px at 170px 230px,rgba(255,255,255,0.8), transparent),
-    radial-gradient(1.5px 1.5px at 350px 180px,rgba(255,250,240,0.9), transparent),
-    radial-gradient(1.5px 1.5px at 240px 300px,rgba(255,255,255,0.85),transparent),
-    radial-gradient(1.5px 1.5px at 90px  340px,rgba(200,230,255,0.8), transparent),
-    radial-gradient(1.5px 1.5px at 300px 360px,rgba(255,255,255,0.9), transparent),
-    radial-gradient(1.5px 1.5px at 150px 380px,rgba(255,245,200,0.8), transparent),
+    radial-gradient(1.5px 1.5px at 25px 80px, rgba(255, 255, 255, 0.95), transparent),
+    radial-gradient(1.5px 1.5px at 110px 30px, rgba(200, 230, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 200px 70px, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.5px 1.5px at 320px 20px, rgba(255, 240, 200, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 280px 120px, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.5px 1.5px at 60px 250px, rgba(200, 220, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 170px 230px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 350px 180px, rgba(255, 250, 240, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 240px 300px, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.5px 1.5px at 90px 340px, rgba(200, 230, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 300px 360px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 150px 380px, rgba(255, 245, 200, 0.8), transparent),
     /* ── Large tile: bright accent stars with colour tint ── */
-    radial-gradient(2px 2px at 80px  50px, rgba(0,212,255,0.9),   transparent),
-    radial-gradient(2px 2px at 220px 140px,rgba(255,255,255,0.95),transparent),
-    radial-gradient(2px 2px at 400px 60px, rgba(124,85,240,0.85), transparent),
-    radial-gradient(2px 2px at 500px 200px,rgba(255,255,255,0.9), transparent),
-    radial-gradient(2px 2px at 140px 420px,rgba(0,212,255,0.8),   transparent),
-    radial-gradient(2px 2px at 360px 420px,rgba(255,200,100,0.8), transparent),
-    radial-gradient(2.5px 2.5px at 50px 500px, rgba(255,255,255,0.95),transparent),
-    radial-gradient(2.5px 2.5px at 480px 480px,rgba(0,229,176,0.85),transparent);
+    radial-gradient(2px 2px at 80px 50px, rgba(0, 212, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 220px 140px, rgba(255, 255, 255, 0.95), transparent),
+    radial-gradient(2px 2px at 400px 60px, rgba(124, 85, 240, 0.85), transparent),
+    radial-gradient(2px 2px at 500px 200px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 140px 420px, rgba(0, 212, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 360px 420px, rgba(255, 200, 100, 0.8), transparent),
+    radial-gradient(2.5px 2.5px at 50px 500px, rgba(255, 255, 255, 0.95), transparent),
+    radial-gradient(2.5px 2.5px at 480px 480px, rgba(0, 229, 176, 0.85), transparent);
   background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat,
-                     repeat, repeat, repeat, repeat, repeat, repeat,
-                     repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat,
-                     repeat, repeat, repeat, repeat,
-                     repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat;
+    repeat, repeat, repeat, repeat, repeat, repeat,
+    repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat,
+    repeat, repeat, repeat, repeat,
+    repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat;
   background-size:
     /* small tile — 14 entries */
     200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px,
@@ -713,20 +739,41 @@ body {
 }
 
 @keyframes drift {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(4%, 3%) scale(1.08); }
-  100% { transform: translate(0, 0) scale(1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(4%, 3%) scale(1.08);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 @keyframes driftReverse {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-3%, -4%) scale(1.05); }
-  100% { transform: translate(0, 0) scale(1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-3%, -4%) scale(1.05);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 @keyframes radarSweep {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-drift-slow {
@@ -756,7 +803,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  pointer-events: none; /* Crucial: Allows clicks to pass through to the 3D Canvas */
+  pointer-events: none;
+  /* Crucial: Allows clicks to pass through to the 3D Canvas */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -780,3 +828,179 @@ body {
   box-shadow: 0 0 8px #00ff66;
 }
 
+/* ─── Mobile Responsiveness (320px - 768px viewports) ─────────────────────── */
+html, body {
+  overflow-x: hidden;
+}
+
+canvas {
+  touch-action: none;
+}
+
+/* Default mobile button size targets */
+@media (max-width: 768px) {
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Globe page Search bottom drawer sheet layout */
+  .search-overlay {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: rgba(6, 13, 31, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(0, 212, 255, 0.15) !important;
+    border-radius: 16px 16px 0 0 !important;
+    z-index: 50 !important;
+    transition: transform var(--transition-smooth) !important;
+    padding: 0 16px 20px !important;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(calc(100% - 60px)) !important; /* collapsed height: 60px */
+    pointer-events: auto !important;
+  }
+
+  .search-overlay.drawer-open {
+    transform: translateY(0) !important;
+  }
+
+  .mobile-drawer-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    cursor: pointer;
+  }
+
+  .drawer-handle-bar {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin-bottom: 6px;
+  }
+
+  .drawer-title-pill {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-cyan);
+    background: rgba(0, 212, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  .search-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px 0 0 !important;
+  }
+
+  .quick-cities {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .city-chip {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  /* Globe page locate button FAB layout */
+  .locate-btn {
+    position: fixed !important;
+    bottom: 80px !important; /* floats above collapsed search drawer */
+    right: 20px !important;
+    z-index: 60 !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    background: rgba(6, 13, 31, 0.9) !important;
+    border: 1px solid rgba(0, 212, 255, 0.2) !important;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Overhead Systems bottom drawer sheet layout */
+  #hud-sidebar-panel {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    height: 70vh !important;
+    background: rgba(6, 13, 31, 0.96) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(0, 212, 255, 0.15) !important;
+    border-radius: 16px 16px 0 0 !important;
+    z-index: 40 !important;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(calc(100% - 60px)) !important; /* collapsed height: 60px */
+    transition: transform var(--transition-smooth) !important;
+  }
+
+  #hud-sidebar-panel.drawer-open {
+    transform: translateY(0) !important;
+  }
+
+  /* Temporal scrubber timeline repositioning on mobile */
+  #zenith-timeline {
+    bottom: 80px !important; /* floats above bottom drawers collapsed height */
+    width: calc(100vw - 24px) !important;
+    padding: 12px 16px !important;
+  }
+
+  /* larger range scrubber thumb touch targets */
+  #timeline-slider-input::-webkit-slider-thumb {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  #timeline-slider-input::-moz-range-thumb {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* landing page hero adjustments */
+  .hero-title {
+    font-size: 2rem !important;
+  }
+  .hero-subtitle {
+    font-size: 13px !important;
+  }
+  .hero-badge {
+    font-size: 10px !important;
+    padding: 4px 12px !important;
+  }
+  .hero-overlay {
+    padding: 40px 16px 0 !important;
+  }
+}
+
+/* range input thumb standard styling */
+#timeline-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  cursor: pointer;
+}
+#timeline-slider-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  border: none;
+  cursor: pointer;
+}
