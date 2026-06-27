@@ -186,6 +186,8 @@ export function useISS(
           lat,
           lon,
           altKm,
+          line1: tle.line1,
+          line2: tle.line2,
         });
       } else {
         setIssObject(null);

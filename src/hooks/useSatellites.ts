@@ -206,6 +206,9 @@ export function useSatellites(
       if (result.alt < 10) continue; // 10 degrees filter
 
       const noradId = item.line1.slice(2, 7).trim();
+      const magnitude = calculateSatelliteMagnitude(result.rangeSat, item.name + "_" + noradId);
+      if (magnitude > 6.0) continue;
+
       objects.push({
         id: `sat-${noradId}`,
         name: item.name,
@@ -215,12 +218,14 @@ export function useSatellites(
         ra: result.ra,
         dec: result.dec,
         distanceKm: result.rangeSat,
-        magnitude: calculateSatelliteMagnitude(result.rangeSat, item.name + "_" + noradId),
+        magnitude,
         color: "#00BFFF",
         nextTransit: null, // computed lazily on selection to prevent major CPU/SGP4 bisection lag
         lat: result.geo?.lat,
         lon: result.geo?.lon,
         altKm: result.geo?.altKm,
+        line1: item.line1,
+        line2: item.line2,
       });
     }
 

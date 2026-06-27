@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useZenithStore } from "@/store/zenith";
 import { altAzToXYZ } from "@/lib/coordinates";
 import { CelestialObject } from "@/lib/celestial";
+import { parseTleToSatrec, propagateSatrec } from "@/lib/satellite";
 
 const SATELLITE_SPHERE_RADIUS = 280; // Layered inside planets/stars for clear visual depth
 const MAX_TRAIL_POINTS = 20;
@@ -55,7 +56,7 @@ interface SatelliteMeshProps {
   onHover: (hover: boolean) => void;
 }
 
-function SatelliteMesh({ position, isSelected, isHovered, onClick, onHover }: SatelliteMeshProps) {
+function SatelliteMesh({ sat, position, isSelected, isHovered, onClick, onHover }: SatelliteMeshProps) {
   const ringRef = useRef<THREE.Mesh>(null);
   const trailRef = useRef<THREE.Line>(null);
   const historyRef = useRef<THREE.Vector3[]>([]);
@@ -65,6 +66,52 @@ function SatelliteMesh({ position, isSelected, isHovered, onClick, onHover }: Sa
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
   }, []);
+
+  const [orbitPoints, setOrbitPoints] = useState<THREE.Vector3[]>([]);
+  const { location, currentTime } = useZenithStore();
+
+  // Pre-calculate full orbit path lines when selected for active tracking
+  useEffect(() => {
+    if (!isSelected || !sat.line1 || !sat.line2 || !location) {
+      setOrbitPoints([]);
+      return;
+    }
+
+    const points: THREE.Vector3[] = [];
+    const satrec = parseTleToSatrec(sat.line1, sat.line2);
+    if (!satrec) return;
+
+    const baseTime = new Date(currentTime);
+    // Draw orbit path over 90-minute period (-30 minutes to +60 minutes)
+    for (let minOffset = -30; minOffset <= 60; minOffset += 2) {
+      const propTime = new Date(baseTime.getTime() + minOffset * 60 * 1000);
+      const result = propagateSatrec(
+        satrec,
+        location.lat,
+        location.lon,
+        0,
+        propTime
+      );
+      if (result && result.alt > 0) {
+        const [x, y, z] = altAzToXYZ(result.alt, result.az, SATELLITE_SPHERE_RADIUS);
+        points.push(new THREE.Vector3(x, y, z));
+      }
+    }
+    setOrbitPoints(points);
+  }, [isSelected, sat.line1, sat.line2, location, currentTime]);
+
+  const orbitLine = useMemo(() => {
+    if (orbitPoints.length === 0) return null;
+    const geom = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+    const mat = new THREE.LineBasicMaterial({
+      color: "#00FFFF",
+      transparent: true,
+      opacity: 0.7,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    return new THREE.Line(geom, mat);
+  }, [orbitPoints]);
 
   // Update selection ring rotation and accumulate trail history in useFrame
   useFrame((state) => {
@@ -121,7 +168,22 @@ function SatelliteMesh({ position, isSelected, isHovered, onClick, onHover }: Sa
         </line>
       )}
 
+      {/* 1.5 Pre-computed Full Orbit Path (visible when selected for active tracking) */}
+      {isSelected && orbitLine && <primitive object={orbitLine} />}
+
       {/* 2. Interactive Satellite Dot (Increased sphere size from 0.6 to 1.6 for visibility at 280 units distance) */}
+      <mesh
+        position={position}
+        scale={[baseScale, baseScale, baseScale]}
+      >
+        <sphereGeometry args={[1.6, 8, 8]} />
+        <meshBasicMaterial
+          color="#00BFFF"
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* 2.5 Invisible Click Collider (makes it easy to click tiny dots) */}
       <mesh
         position={position}
         onClick={(e) => {
@@ -138,13 +200,9 @@ function SatelliteMesh({ position, isSelected, isHovered, onClick, onHover }: Sa
           onHover(false);
           document.body.style.cursor = "default";
         }}
-        scale={[baseScale, baseScale, baseScale]}
       >
-        <sphereGeometry args={[1.6, 8, 8]} />
-        <meshBasicMaterial
-          color="#00BFFF"
-          toneMapped={false}
-        />
+        <sphereGeometry args={[14, 8, 8]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
       {/* 3. Selected object visual indicator */}

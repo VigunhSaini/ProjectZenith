@@ -53,4 +53,7 @@ export interface CelestialObject {
   lon?: number;
   /** For satellites / ISS: altitude above ellipsoid in km */
   altKm?: number;
+  /** For satellites / ISS: raw TLE lines for orbit propagation */
+  line1?: string;
+  line2?: string;
 }

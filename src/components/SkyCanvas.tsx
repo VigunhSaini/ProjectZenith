@@ -75,6 +75,7 @@ export default function SkyCanvas({ objects }: SkyCanvasProps) {
   // Filter central data objects by category for child components
   const planets = objects.filter((o) => o.category === "planet");
   const satellites = objects.filter((o) => o.category === "satellite");
+  const stars = objects.filter((o) => o.category === "star");
   const issObject = objects.find((o) => o.category === "iss") || null;
 
   return (
@@ -91,6 +92,7 @@ export default function SkyCanvas({ objects }: SkyCanvasProps) {
     >
       <Canvas
         shadows
+        raycaster={{ params: { Points: { threshold: 6.0 } } as any }}
         camera={{
           fov: 65,
           near: 0.1,
@@ -109,7 +111,7 @@ export default function SkyCanvas({ objects }: SkyCanvasProps) {
         <pointLight position={[10, 10, 10]} intensity={1.5} />
 
         {/* 3D Scene Components */}
-        <StarField />
+        <StarField stars={stars} />
         <Constellations />
         <Planets planets={planets} />
         <Satellites satellites={satellites} />

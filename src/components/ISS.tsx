@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useZenithStore } from "@/store/zenith";
 import { altAzToXYZ } from "@/lib/coordinates";
 import { CelestialObject } from "@/lib/celestial";
+import { parseTleToSatrec, propagateSatrec } from "@/lib/satellite";
 
 const ISS_SPHERE_RADIUS = 322; // Layered with satellites but slightly distinct
 const MAX_TRAIL_POINTS = 35; // Longer trail for ISS
@@ -22,12 +23,62 @@ export default function ISS({ issObject }: ISSProps) {
   const glowRef = useRef<THREE.Mesh>(null);
   const ringRef = useRef<THREE.Mesh>(null);
   const trailRef = useRef<THREE.Line>(null);
+  const colliderRef = useRef<THREE.Mesh>(null);
   const historyRef = useRef<THREE.Vector3[]>([]);
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
   }, []);
+
+  const isSelected = selectedObject?.id === issObject?.id;
+  const isHovered = hoveredObject?.id === issObject?.id;
+
+  const [orbitPoints, setOrbitPoints] = useState<THREE.Vector3[]>([]);
+  const { currentTime } = useZenithStore();
+
+  // Pre-calculate full orbit path lines when ISS is selected for active tracking
+  useEffect(() => {
+    if (!isSelected || !issObject || !issObject.line1 || !issObject.line2 || !location) {
+      setOrbitPoints([]);
+      return;
+    }
+
+    const points: THREE.Vector3[] = [];
+    const satrec = parseTleToSatrec(issObject.line1, issObject.line2);
+    if (!satrec) return;
+
+    const baseTime = new Date(currentTime);
+    // Draw ISS orbit path over 90-minute period (-30 minutes to +60 minutes)
+    for (let minOffset = -30; minOffset <= 60; minOffset += 2) {
+      const propTime = new Date(baseTime.getTime() + minOffset * 60 * 1000);
+      const result = propagateSatrec(
+        satrec,
+        location.lat,
+        location.lon,
+        0,
+        propTime
+      );
+      if (result && result.alt > 0) {
+        const [x, y, z] = altAzToXYZ(result.alt, result.az, ISS_SPHERE_RADIUS);
+        points.push(new THREE.Vector3(x, y, z));
+      }
+    }
+    setOrbitPoints(points);
+  }, [isSelected, issObject, location, currentTime]);
+
+  const orbitLine = useMemo(() => {
+    if (orbitPoints.length === 0) return null;
+    const geom = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+    const mat = new THREE.LineBasicMaterial({
+      color: "#FF8C00", // Orange ISS tracking line
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    return new THREE.Line(geom, mat);
+  }, [orbitPoints]);
 
   useFrame((state) => {
     if (!location || !issObject || issObject.alt < 0) return;
@@ -36,9 +87,12 @@ export default function ISS({ issObject }: ISSProps) {
     const [x, y, z] = altAzToXYZ(issObject.alt, issObject.az, ISS_SPHERE_RADIUS);
     const currentPos = new THREE.Vector3(x, y, z);
 
-    // 2. Position the ISS sphere
+    // 2. Position the ISS sphere and its click collider
     if (meshRef.current) {
       meshRef.current.position.copy(currentPos);
+    }
+    if (colliderRef.current) {
+      colliderRef.current.position.copy(currentPos);
     }
 
     // 3. Pulse the atmospheric glow effect
@@ -81,9 +135,6 @@ export default function ISS({ issObject }: ISSProps) {
 
   if (!location || !issObject || issObject.alt < 0) return null;
 
-  const isSelected = selectedObject?.id === issObject.id;
-  const isHovered = hoveredObject?.id === issObject.id;
-
   const baseScale = isSelected ? 2.2 : isHovered ? 1.8 : 1.5;
 
   return (
@@ -103,6 +154,9 @@ export default function ISS({ issObject }: ISSProps) {
         </line>
       )}
 
+      {/* 1.5 Pre-computed Full Orbit Path (visible when selected for active tracking) */}
+      {isSelected && orbitLine && <primitive object={orbitLine} />}
+
       {/* 2. Glow Halo */}
       <mesh ref={glowRef}>
         <sphereGeometry args={[1.5, 12, 12]} />
@@ -115,9 +169,21 @@ export default function ISS({ issObject }: ISSProps) {
         />
       </mesh>
 
-      {/* 3. Interactive ISS Sphere */}
+      {/* 3. ISS Visual Sphere */}
       <mesh
         ref={meshRef}
+        scale={[baseScale, baseScale, baseScale]}
+      >
+        <sphereGeometry args={[0.9, 12, 12]} />
+        <meshBasicMaterial
+          color="#FF8C00"
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* 3.5 Transparent Click Collider */}
+      <mesh
+        ref={colliderRef}
         onClick={(e) => {
           e.stopPropagation();
           selectObject(issObject);
@@ -132,13 +198,9 @@ export default function ISS({ issObject }: ISSProps) {
           setHoveredObject(null);
           document.body.style.cursor = "default";
         }}
-        scale={[baseScale, baseScale, baseScale]}
       >
-        <sphereGeometry args={[0.9, 12, 12]} />
-        <meshBasicMaterial
-          color="#FF8C00"
-          toneMapped={false}
-        />
+        <sphereGeometry args={[20, 8, 8]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
       {/* 4. Selection Target Ring */}

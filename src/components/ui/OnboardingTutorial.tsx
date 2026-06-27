@@ -102,7 +102,6 @@ export default function OnboardingTutorial({
     selectedObject,
     setSelectedObject,
     tutorialActive,
-    setTutorialActive,
     tutorialStepIndex,
     activeTutorialScreen,
     setTutorialStepIndex,

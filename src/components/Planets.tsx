@@ -86,10 +86,117 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
   });
 
   return (
-    <group ref={groupRef} position={position} scale={[scale, scale, scale]}>
-      {/* 1. Interactive Sphere */}
+    <group>
+      {/* Visual planet group */}
+      <group ref={groupRef} position={position} scale={[scale, scale, scale]}>
+        {/* 1. Planet Sphere */}
+        <mesh ref={sphereRef}>
+          <sphereGeometry args={[1, 32, 32]} />
+          {planet.name === "Jupiter" ? (
+            <shaderMaterial
+              uniforms={{
+                color1: { value: new THREE.Color("#C88B3A") },
+                color2: { value: new THREE.Color("#8B4513") },
+                color3: { value: new THREE.Color("#FFF8DC") },
+              }}
+              vertexShader={`
+                varying vec2 vUv;
+                void main() {
+                  vUv = uv;
+                  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+              `}
+              fragmentShader={`
+                varying vec2 vUv;
+                uniform vec3 color1;
+                uniform vec3 color2;
+                uniform vec3 color3;
+                void main() {
+                  // Create horizontal stripes based on UV.y
+                  float y = vUv.y * 12.0;
+                  float stripe = sin(y) * cos(y * 0.5) * 0.5 + 0.5;
+                  
+                  vec3 finalColor;
+                  if (stripe < 0.3) {
+                    finalColor = mix(color1, color2, stripe / 0.3);
+                  } else {
+                    finalColor = mix(color2, color3, (stripe - 0.3) / 0.7);
+                  }
+                  
+                  gl_FragColor = vec4(finalColor, 1.0);
+                }
+              `}
+            />
+          ) : (
+            <meshBasicMaterial
+              color={planet.name === "Venus" ? "#FFE7BA" : planet.color}
+              transparent={requiresAid || isDim}
+              opacity={requiresAid ? 0.3 : isDim ? 0.35 : 1.0}
+              toneMapped={planet.name === "Venus" ? false : undefined}
+            />
+          )}
+        </mesh>
+
+        {/* 2. Saturn's Ring */}
+        {planet.name === "Saturn" && (
+          <mesh rotation={[Math.PI / 2.5, 0, 0]}>
+            <ringGeometry args={[1.4, 2.5, 64]} />
+            <meshBasicMaterial
+              color="#E4D191"
+              side={THREE.DoubleSide}
+              transparent
+              opacity={requiresAid ? 0.3 : 0.85}
+            />
+          </mesh>
+        )}
+
+        {/* 3. Selection Ring (Sci-fi rotating dashed circle) */}
+        {isSelected && (
+          <mesh ref={ringRef}>
+            <ringGeometry args={[2.8, 3.0, 32]} />
+            <meshBasicMaterial
+              color="#00FFFF"
+              side={THREE.DoubleSide}
+              transparent
+              opacity={0.8}
+              blending={THREE.AdditiveBlending}
+              wireframe // Renders lines instead of triangles
+            />
+          </mesh>
+        )}
+
+        {/* 4. Glowing Atmosphere / Halo (for Venus, Jupiter, Mars) */}
+        {(isHovered || isSelected) && !requiresAid && (
+          <mesh>
+            <sphereGeometry args={[1.15, 16, 16]} />
+            <meshBasicMaterial
+              color={planet.color}
+              transparent
+              opacity={0.25}
+              blending={THREE.AdditiveBlending}
+              side={THREE.BackSide}
+            />
+          </mesh>
+        )}
+
+        {/* 5. Dashed Circle (Visual indicator for optical aid required) */}
+        {requiresAid && (
+          <mesh>
+            <ringGeometry args={[1.4, 1.5, 8]} />
+            <meshBasicMaterial
+              color={planet.color}
+              side={THREE.DoubleSide}
+              transparent
+              opacity={0.3}
+              wireframe // Renders dashed-like octagon
+            />
+          </mesh>
+        )}
+      </group>
+
+      {/* 6. Invisible Click Collider */}
       <mesh
-        ref={sphereRef}
+        position={position}
         onClick={(e) => {
           e.stopPropagation();
           onClick();
@@ -105,107 +212,9 @@ function PlanetMesh({ planet, position, isSelected, isHovered, onClick, onHover 
           document.body.style.cursor = "default";
         }}
       >
-        <sphereGeometry args={[1, 32, 32]} />
-        {planet.name === "Jupiter" ? (
-          <shaderMaterial
-            uniforms={{
-              color1: { value: new THREE.Color("#C88B3A") },
-              color2: { value: new THREE.Color("#8B4513") },
-              color3: { value: new THREE.Color("#FFF8DC") },
-            }}
-            vertexShader={`
-              varying vec2 vUv;
-              void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-              }
-            `}
-            fragmentShader={`
-              varying vec2 vUv;
-              uniform vec3 color1;
-              uniform vec3 color2;
-              uniform vec3 color3;
-              void main() {
-                // Create horizontal stripes based on UV.y
-                float y = vUv.y * 12.0;
-                float stripe = sin(y) * cos(y * 0.5) * 0.5 + 0.5;
-                
-                vec3 finalColor;
-                if (stripe < 0.3) {
-                  finalColor = mix(color1, color2, stripe / 0.3);
-                } else {
-                  finalColor = mix(color2, color3, (stripe - 0.3) / 0.7);
-                }
-                
-                gl_FragColor = vec4(finalColor, 1.0);
-              }
-            `}
-          />
-        ) : (
-          <meshBasicMaterial
-            color={planet.name === "Venus" ? "#FFE7BA" : planet.color}
-            transparent={requiresAid || isDim}
-            opacity={requiresAid ? 0.3 : isDim ? 0.35 : 1.0}
-            toneMapped={planet.name === "Venus" ? false : undefined}
-          />
-        )}
+        <sphereGeometry args={[22, 8, 8]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
-
-      {/* 2. Saturn's Ring */}
-      {planet.name === "Saturn" && (
-        <mesh rotation={[Math.PI / 2.5, 0, 0]}>
-          <ringGeometry args={[1.4, 2.5, 64]} />
-          <meshBasicMaterial
-            color="#E4D191"
-            side={THREE.DoubleSide}
-            transparent
-            opacity={requiresAid ? 0.3 : 0.85}
-          />
-        </mesh>
-      )}
-
-      {/* 3. Selection Ring (Sci-fi rotating dashed circle) */}
-      {isSelected && (
-        <mesh ref={ringRef}>
-          <ringGeometry args={[2.8, 3.0, 32]} />
-          <meshBasicMaterial
-            color="#00FFFF"
-            side={THREE.DoubleSide}
-            transparent
-            opacity={0.8}
-            blending={THREE.AdditiveBlending}
-            wireframe // Renders lines instead of triangles
-          />
-        </mesh>
-      )}
-
-      {/* 4. Glowing Atmosphere / Halo (for Venus, Jupiter, Mars) */}
-      {(isHovered || isSelected) && !requiresAid && (
-        <mesh>
-          <sphereGeometry args={[1.15, 16, 16]} />
-          <meshBasicMaterial
-            color={planet.color}
-            transparent
-            opacity={0.25}
-            blending={THREE.AdditiveBlending}
-            side={THREE.BackSide}
-          />
-        </mesh>
-      )}
-
-      {/* 5. Dashed Circle (Visual indicator for optical aid required) */}
-      {requiresAid && (
-        <mesh>
-          <ringGeometry args={[1.4, 1.5, 8]} />
-          <meshBasicMaterial
-            color={planet.color}
-            side={THREE.DoubleSide}
-            transparent
-            opacity={0.3}
-            wireframe // Renders dashed-like octagon
-          />
-        </mesh>
-      )}
     </group>
   );
 }
