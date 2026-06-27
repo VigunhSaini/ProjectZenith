@@ -102,6 +102,7 @@ export default function OnboardingTutorial({
     selectedObject,
     setSelectedObject,
     tutorialActive,
+    setTutorialActive,
     tutorialStepIndex,
     activeTutorialScreen,
     setTutorialStepIndex,
@@ -110,6 +111,7 @@ export default function OnboardingTutorial({
     skipTutorial,
   } = useZenithStore();
 
+  const [isNavigating, setIsNavigating] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [tooltipSize, setTooltipSize] = useState({ width: 320, height: 180 });
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -121,7 +123,7 @@ export default function OnboardingTutorial({
 
   const activeStep = currentScreenSteps[tutorialStepIndex];
   const isCurrentlyShowing =
-    tutorialActive && activeTutorialScreen === currentScreen && activeStep;
+    tutorialActive && activeTutorialScreen === currentScreen && activeStep && isLoaded && !isNavigating;
 
   // Auto-launch trigger on first visit
   useEffect(() => {
@@ -177,8 +179,8 @@ export default function OnboardingTutorial({
     }
 
     const selector = activeStep.targetSelector;
-    if (selector === "#cesium-globe-container" || selector === "#sky-canvas-container") {
-      // Spotlight a centered circular region in the middle of the viewport covering the Earth/Sky dome
+    if (selector === "#cesium-globe-container") {
+      // Spotlight a centered circular region in the middle of the viewport covering the Earth globe
       const diameter = Math.min(750, window.innerWidth - 20, window.innerHeight - 20);
       const x = window.innerWidth / 2 - diameter / 2;
       const y = window.innerHeight / 2 - diameter / 2;
@@ -191,7 +193,7 @@ export default function OnboardingTutorial({
         height: diameter,
         right: x + diameter,
         bottom: y + diameter,
-        toJSON: () => {},
+        toJSON: () => { },
       } as DOMRect);
       return;
     }
@@ -252,6 +254,7 @@ export default function OnboardingTutorial({
     } else {
       // Completed the final step of the current screen
       if (currentScreen === "globe") {
+        setIsNavigating(true); // Hide overlay immediately during navigation
         if (onNavigateToSky) {
           onNavigateToSky();
         } else {
@@ -335,8 +338,7 @@ export default function OnboardingTutorial({
 
   // Mask coordinates & sizing
   const isCircleCutout =
-    activeStep?.targetSelector === "#cesium-globe-container" ||
-    activeStep?.targetSelector === "#sky-canvas-container";
+    activeStep?.targetSelector === "#cesium-globe-container";
 
   const pad = isCircleCutout ? 0 : 8;
   const maskX = rect ? rect.x - pad : 0;

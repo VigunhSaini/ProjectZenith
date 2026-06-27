@@ -125,9 +125,9 @@ export default function SkyCanvas({ objects }: SkyCanvasProps) {
           enableZoom={true}
           enablePan={false}
           minDistance={1}
-          maxDistance={50}
+          maxDistance={1}                  // lock zoom to inside the sphere, prevent zooming out
           minPolarAngle={0.02}               // Avoid gimbal lock at poles
-          maxPolarAngle={Math.PI - 0.02}     // Allow looking up at sky objects from lower hemisphere
+          maxPolarAngle={Math.PI / 2}       // can't look below horizon
           target={[0, 0, 0]}               // Look-around pivot center
         />
       </Canvas>

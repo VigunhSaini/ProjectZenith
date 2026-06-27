@@ -135,7 +135,7 @@ export function altAzToXYZ(altDeg: number, azDeg: number, radius: number): [numb
   const y = radius * Math.sin(altRad);
   const horiz = radius * Math.cos(altRad);
   const x = horiz * Math.sin(azRad);
-  const z = horiz * Math.cos(azRad);
+  const z = -horiz * Math.cos(azRad); // flip to match compass N at -Z
 
   return [x, y, z];
 }

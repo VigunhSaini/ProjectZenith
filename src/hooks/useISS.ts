@@ -52,19 +52,32 @@ export function useISS(
   const [issObject, setIssObject] = useState<CelestialObject | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Helper to fetch live ISS position
+  // Rate-limit guard: tracks when we last fetched from the API
+  const lastFetchRef = useRef<number>(0);
+  // Cache the most recent successful API response between fetches
+  const cachedPosRef = useRef<{ lat: number; lon: number; altKm: number } | null>(null);
+
+  // Helper to fetch live ISS position (rate-limited by guard ref)
   const fetchLiveISS = async () => {
+    const now = Date.now();
+    // If last fetch was less than 4.5s ago, return cached position immediately (preventing network call)
+    if (now - lastFetchRef.current < 4500) {
+      return cachedPosRef.current;
+    }
     try {
+      lastFetchRef.current = now;
       const res = await fetch(ISS_URL);
-      if (!res.ok) return null;
+      if (!res.ok) return cachedPosRef.current; // return cache on 429/error
       const data: ISSApiResponse = await res.json();
-      return {
+      const pos = {
         lat: data.latitude,
         lon: data.longitude,
         altKm: data.altitude,
       };
+      cachedPosRef.current = pos;
+      return pos;
     } catch {
-      return null;
+      return cachedPosRef.current; // return cache on network error
     }
   };
 
