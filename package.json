@@ -26,6 +26,7 @@
     "react-dom": "^18.3.1",
     "satellite.js": "^5.0.0",
     "three": "^0.184.0",
+    "tz-lookup": "^6.1.25",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -33,6 +34,7 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/tz-lookup": "^6.1.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",

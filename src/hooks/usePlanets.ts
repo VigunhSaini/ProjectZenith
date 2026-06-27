@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import * as Astronomy from "astronomy-engine";
 import { CelestialObject } from "@/lib/celestial";
-import { nextTransit } from "@/lib/astronomy";
+import { nextTransit, toUTCDate } from "@/lib/astronomy";
 
 // AU → km
 const AU_TO_KM = 1.495978707e8;
@@ -62,7 +62,7 @@ export function usePlanets(
     try {
       setLoading(true);
       setError(null);
-      const astroTime = Astronomy.MakeTime(time);
+      const astroTime = Astronomy.MakeTime(toUTCDate(time));
       const observer = new Astronomy.Observer(observerLat, observerLon, 0);
 
       const results: CelestialObject[] = [];

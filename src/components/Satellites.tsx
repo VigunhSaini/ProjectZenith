@@ -55,7 +55,7 @@ interface SatelliteMeshProps {
   onHover: (hover: boolean) => void;
 }
 
-function SatelliteMesh({ sat, position, isSelected, isHovered, onClick, onHover }: SatelliteMeshProps) {
+function SatelliteMesh({ position, isSelected, isHovered, onClick, onHover }: SatelliteMeshProps) {
   const ringRef = useRef<THREE.Mesh>(null);
   const trailRef = useRef<THREE.Line>(null);
   const historyRef = useRef<THREE.Vector3[]>([]);

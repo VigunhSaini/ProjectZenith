@@ -4,7 +4,8 @@ import { useZenithStore } from "@/store/zenith";
 import ModeToggle from "./ModeToggle";
 import Link from "next/link";
 import { useMemo } from "react";
-import { getLST } from "@/lib/astronomy";
+import { getLST, toUTCDate } from "@/lib/astronomy";
+import tzlookup from "tz-lookup";
 
 interface TopbarProps {
   totalObjects: number;
@@ -34,21 +35,29 @@ export default function Topbar({ totalObjects }: TopbarProps) {
   }, [activeTime, location]);
 
   const formattedTime = useMemo(() => {
-    return activeTime.toLocaleTimeString([], {
+    const timezone = location
+      ? tzlookup(location.lat, location.lon)
+      : Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return activeTime.toLocaleTimeString("en-GB", {
+      timeZone: timezone,
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
     });
-  }, [activeTime]);
+  }, [activeTime, location]);
 
   const formattedDate = useMemo(() => {
-    return activeTime.toLocaleDateString([], {
+    const timezone = location
+      ? tzlookup(location.lat, location.lon)
+      : Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return activeTime.toLocaleDateString("en-GB", {
+      timeZone: timezone,
       year: "numeric",
       month: "short",
       day: "2-digit",
     });
-  }, [activeTime]);
+  }, [activeTime, location]);
 
   return (
     <header
@@ -114,7 +123,7 @@ export default function Topbar({ totalObjects }: TopbarProps) {
           </div>
           <div className="w-[1px] h-3 bg-white/15" />
           <div className="text-[11px] text-white/50">
-            J2000: <span className="text-white font-bold" suppressHydrationWarning>{(2440587.5 + activeTime.getTime() / 86400000).toFixed(4)}</span>
+            J2000: <span className="text-white font-bold" suppressHydrationWarning>{(2440587.5 + toUTCDate(activeTime).getTime() / 86400000).toFixed(4)}</span>
           </div>
         </div>
       )}

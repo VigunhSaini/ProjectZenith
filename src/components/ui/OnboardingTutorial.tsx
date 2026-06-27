@@ -107,8 +107,6 @@ export default function OnboardingTutorial({
     setTutorialStepIndex,
     setActiveTutorialScreen,
     startTutorial,
-    nextTutorialStep,
-    prevTutorialStep,
     skipTutorial,
   } = useZenithStore();
 

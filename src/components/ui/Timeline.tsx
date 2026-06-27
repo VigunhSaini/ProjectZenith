@@ -13,13 +13,33 @@ export default function Timeline() {
   // Sync state back to Zustand store on slider movement
   const handleSliderChange = (val: number) => {
     setOffset(val);
-    setCurrentTime(Date.now() + val * 1000);
+    const now = new Date();
+    const utcNow = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds(),
+      now.getUTCMilliseconds()
+    );
+    setCurrentTime(utcNow + val * 1000);
   };
 
   // Reset to live when clicking "LIVE"
   const handleResetToLive = () => {
     setOffset(0);
-    setCurrentTime(Date.now());
+    const now = new Date();
+    const utcNow = Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds(),
+      now.getUTCMilliseconds()
+    );
+    setCurrentTime(utcNow);
   };
 
   // Format offset for display
@@ -37,7 +57,17 @@ export default function Timeline() {
   useEffect(() => {
     if (offset !== 0) return;
     const interval = setInterval(() => {
-      setCurrentTime(Date.now());
+      const now = new Date();
+      const utcNow = Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        now.getUTCHours(),
+        now.getUTCMinutes(),
+        now.getUTCSeconds(),
+        now.getUTCMilliseconds()
+      );
+      setCurrentTime(utcNow);
     }, 1000);
     return () => clearInterval(interval);
   }, [offset, setCurrentTime]);

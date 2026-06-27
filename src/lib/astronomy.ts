@@ -9,6 +9,18 @@ export interface AltAz {
   alt: number; // degrees [-90, 90]
 }
 
+export function toUTCDate(date: Date): Date {
+  return new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds(),
+    date.getUTCMilliseconds()
+  ));
+}
+
 /**
  * Convert RA/Dec (J2000) to local Altitude/Azimuth for a given observer and time.
  *
@@ -26,7 +38,7 @@ export function raDecToAltAz(
   date: Date
 ): AltAz {
   const observer = new Astronomy.Observer(lat, lon, 0);
-  const time = Astronomy.MakeTime(date);
+  const time = Astronomy.MakeTime(toUTCDate(date));
 
   // astronomy-engine Horizon expects RA in hours and Dec in degrees
   const hor = Astronomy.Horizon(time, observer, ra, dec, "normal");
@@ -42,7 +54,7 @@ export function raDecToAltAz(
  * for a given date and longitude (east positive).
  */
 export function getLST(date: Date, lon: number): number {
-  const astTime = Astronomy.MakeTime(date);
+  const astTime = Astronomy.MakeTime(toUTCDate(date));
   const gmst = Astronomy.SiderealTime(astTime);
   return (gmst + lon / 15 + 24) % 24;
 }
