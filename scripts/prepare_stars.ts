@@ -180,6 +180,13 @@ function parseCSVLine(line: string): string[] {
 }
 
 async function main() {
+  // If star catalog already exists (e.g. committed to repo), skip re-download
+  if (fs.existsSync(OUTPUT_PATH)) {
+    const kb = (fs.statSync(OUTPUT_PATH).size / 1024).toFixed(1);
+    console.log(`✅ Star catalog already exists at ${OUTPUT_PATH} (${kb} KB) — skipping download.`);
+    return;
+  }
+
   console.log("⬇️  Downloading HYG v3.8 catalogue (gzipped)…");
   const csv = await downloadGzip(HYG_GZ_URL);
 

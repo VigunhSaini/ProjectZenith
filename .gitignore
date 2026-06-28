@@ -35,9 +35,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Zenith — generated assets (do not commit)
+# Zenith — generated assets
+# /public/cesium/ is copied by postinstall from node_modules/cesium — do NOT commit (50MB+)
 /public/cesium/
-/public/data/hyg_stars.json
+# hyg_stars.json IS committed — Vercel build cannot reliably fetch from GitHub Raw during build
+# /public/data/hyg_stars.json
 
 # Local backups
 /.backup_zenith/

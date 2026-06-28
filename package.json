@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "node -e \"const fs = require('fs'); fs.rmSync('.next', {recursive:true,force:true})\" && next dev",
     "copy-cesium": "node scripts/copy-cesium-assets.mjs",
-    "build": "node -e \"const fs = require('fs'); fs.rmSync('.next', {recursive:true,force:true})\" && npm run prepare-stars && npm run copy-cesium && next build",
+    "build": "npm run copy-cesium && next build",
+    "vercel-build": "npm run prepare-stars && npm run copy-cesium && next build",
     "start": "next start",
     "lint": "next lint",
     "prepare-stars": "npx tsx scripts/prepare_stars.ts",

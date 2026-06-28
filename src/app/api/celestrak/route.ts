@@ -56,9 +56,11 @@ export async function GET() {
     }
 
     if (!isFetched) {
-      console.warn(`CelesTrak default fetch returned status ${responseStatus}. Trying curl.exe fallback...`);
+      console.warn(`CelesTrak default fetch returned status ${responseStatus}. Trying curl fallback...`);
       try {
-        const fetchedText = execSync(`curl.exe -s -A "Mozilla/5.0" "${celestrakUrl}"`, { encoding: "utf-8", timeout: 10000 });
+        // Use `curl` (Linux/Mac/modern Windows) — NOT `curl.exe` which is Windows-only
+        const curlCmd = process.platform === "win32" ? "curl.exe" : "curl";
+        const fetchedText = execSync(`${curlCmd} -s -A "Mozilla/5.0" "${celestrakUrl}"`, { encoding: "utf-8", timeout: 10000 });
         if (fetchedText.includes("1 ") && fetchedText.includes("2 ") && fetchedText.split("\n").length > 5) {
           text = fetchedText;
           isFetched = true;
