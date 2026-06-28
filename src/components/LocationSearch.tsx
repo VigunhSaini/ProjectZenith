@@ -27,11 +27,65 @@ interface LocationSearchProps {
   onLocationSelect: (lat: number, lon: number, name: string) => void;
 }
 
+/**
+ * Try to parse a raw coordinate string in any of these formats:
+ *   "28.6139, 77.2090"
+ *   "28.6139° N, 77.2090° E"
+ *   "28°36'50\"N 77°12'32\"E"
+ *   "-33.8688, 151.2093"
+ *
+ * Returns { lat, lon } or null if not a coordinate string.
+ */
+function parseCoordinates(input: string): { lat: number; lon: number } | null {
+  const s = input.trim();
+
+  // Format 1: decimal degrees "lat, lon" or "lat lon"
+  const decimalMatch = s.match(
+    /^([+-]?\d{1,3}(?:\.\d+)?)\s*°?\s*[NSns]?\s*[,\s]\s*([+-]?\d{1,3}(?:\.\d+)?)\s*°?\s*[EWew]?$/
+  );
+  if (decimalMatch) {
+    const lat = parseFloat(decimalMatch[1]);
+    const lon = parseFloat(decimalMatch[2]);
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      return { lat, lon };
+    }
+  }
+
+  // Format 2: "28.6139° N, 77.2090° E" or "28.6139N, 77.2090E"
+  const dirMatch = s.match(
+    /([+-]?\d{1,3}(?:\.\d+)?)\s*°?\s*([NSns])[,\s]+([+-]?\d{1,3}(?:\.\d+)?)\s*°?\s*([EWew])/
+  );
+  if (dirMatch) {
+    let lat = parseFloat(dirMatch[1]);
+    let lon = parseFloat(dirMatch[3]);
+    if (dirMatch[2].toUpperCase() === "S") lat = -Math.abs(lat);
+    if (dirMatch[4].toUpperCase() === "W") lon = -Math.abs(lon);
+    if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      return { lat, lon };
+    }
+  }
+
+  // Format 3: DMS "28°36'50"N 77°12'32"E"
+  const dmsMatch = s.match(
+    /(\d{1,3})°\s*(\d{1,2})'\s*(\d{1,2}(?:\.\d+)?)"?\s*([NSns])\s*[,\s]*(\d{1,3})°\s*(\d{1,2})'\s*(\d{1,2}(?:\.\d+)?)"?\s*([EWew])/
+  );
+  if (dmsMatch) {
+    const latDeg = parseFloat(dmsMatch[1]) + parseFloat(dmsMatch[2]) / 60 + parseFloat(dmsMatch[3]) / 3600;
+    const lonDeg = parseFloat(dmsMatch[5]) + parseFloat(dmsMatch[6]) / 60 + parseFloat(dmsMatch[7]) / 3600;
+    const lat = dmsMatch[4].toUpperCase() === "S" ? -latDeg : latDeg;
+    const lon = dmsMatch[8].toUpperCase() === "W" ? -lonDeg : lonDeg;
+    if (!isNaN(lat) && !isNaN(lon)) return { lat, lon };
+  }
+
+  return null;
+}
+
 export default function LocationSearch({ onLocationSelect }: LocationSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [coordHint, setCoordHint] = useState<{ lat: number; lon: number } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const search = useCallback(async (q: string) => {
@@ -57,8 +111,27 @@ export default function LocationSearch({ onLocationSelect }: LocationSearchProps
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
+
+    // Check if the input looks like raw coordinates — handle instantly
+    const coords = parseCoordinates(val);
+    if (coords) {
+      setCoordHint(coords);
+      setResults([]);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      return;
+    }
+
+    setCoordHint(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => search(val), 350);
+  };
+
+  const handleCoordHintClick = () => {
+    if (!coordHint) return;
+    const label = `${coordHint.lat.toFixed(4)}°, ${coordHint.lon.toFixed(4)}°`;
+    onLocationSelect(coordHint.lat, coordHint.lon, label);
+    setQuery(label);
+    setCoordHint(null);
   };
 
   const handleResultClick = (r: SearchResult) => {
@@ -88,6 +161,7 @@ export default function LocationSearch({ onLocationSelect }: LocationSearchProps
     );
   };
 
+
   return (
     <div className="location-search-container" id="location-search">
       {/* Glass card */}
@@ -102,7 +176,7 @@ export default function LocationSearch({ onLocationSelect }: LocationSearchProps
               type="text"
               value={query}
               onChange={handleInputChange}
-              placeholder="Search a city or location…"
+              placeholder="City name or coordinates: 28.6139, 77.2090"
               className="search-input"
               id="location-search-input"
               autoComplete="off"
@@ -121,8 +195,30 @@ export default function LocationSearch({ onLocationSelect }: LocationSearchProps
           </button>
         </div>
 
+        {/* Coordinate hint — shown when input is detected as raw lat/lon */}
+        {coordHint && (
+          <div
+            onClick={handleCoordHintClick}
+            className="search-results"
+            id="coord-hint-result"
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="search-result-item"
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+            >
+              <span>
+                📌 <strong>{coordHint.lat.toFixed(4)}°</strong>, <strong>{coordHint.lon.toFixed(4)}°</strong>
+                <span style={{ marginLeft: 8, opacity: 0.5, fontSize: "0.75rem" }}>Coordinates detected</span>
+              </span>
+              <span style={{ color: "#00d4ff", fontWeight: "bold", fontSize: "0.8rem" }}>Go →</span>
+            </div>
+          </div>
+        )}
+
         {/* Autocomplete results */}
-        {results.length > 0 && (
+        {!coordHint && results.length > 0 && (
+
           <ul className="search-results" id="search-results-list">
             {results.map((r, i) => (
               <li
